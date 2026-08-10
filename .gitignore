@@ -1,4 +1,5 @@
 .env
 .venv/
+output.wav
 node_modules/
 __pycache__/
