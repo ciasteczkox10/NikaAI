@@ -1,5 +1,5 @@
 .env
 .venv/
-output.wav
+tts/*.wav
 node_modules/
 __pycache__/
