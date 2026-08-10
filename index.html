@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>NikaAI-lite</title>
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div id="head-tag"></div>
+<div class="input-text">
+  <input id="user_prompt" autocomplete="off" placeholder="Send a message">
+  <button class="input-button" onclick="sendPrompt()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="19" x2="12" y2="5"></line>
+      <polyline points="5 12 12 5 19 12"></polyline>
+    </svg>
+  </button>
+</div>
+<div class="button-column">
+  <button class="hamburger-btn" onclick="toggleList()"></button>
+  <ul id="myList" class="hidden">
+    <li><button id="tracking">Mouse tracking <span id="tracking_id">ON</span></button></li>
+    <li><button id="reset_play_vrma">Reset VRMA</button></li>
+  </ul>
+</div>
+<script type="module" src="/main.js"></script>
+<script>
+  let listOpen = false;
+
+  function toggleList() {
+    listOpen = !listOpen;
+    document.getElementById("myList").classList.toggle("hidden", !listOpen);
+  }
+
+  function showHeadTag(text) {
+    const el = document.getElementById("head-tag");
+    el.textContent = text;
+    el.style.display = text ? "block" : "none";
+  }
+
+  function sendPrompt() {
+    const input = document.getElementById("user_prompt");
+    if (!input.value || !ws || ws.readyState !== WebSocket.OPEN) return;
+    ws.send("user_prompt:" + input.value);
+    window.dispatchEvent(new Event("thinking"));
+    console.log("User:", input.value)
+    input.value = "";
+  }
+
+  let ws;
+  function connectWS() {
+    ws = new WebSocket("ws://localhost:8766");
+    ws.onopen = () => console.log("Connected to Python server.");
+    ws.onclose = () => setTimeout(connectWS, 1000);
+    ws.onmessage = ({ data }) => {
+      const [cmd, ...rest] = data.split(":");
+      const arg = rest.join(":");
+    }
+    ws.onerror = () => ws.close();
+  }
+  connectWS();
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("user_prompt").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); sendPrompt(); }
+    });
+  });
+</script>
+</body>
+</html>
