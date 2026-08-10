@@ -588,10 +588,10 @@ function loadVRM(modelPath) {
     console.error("Failed to load VRM:", current_model, error);  });
 }
 
-const reset_play_vrma_btn = document.getElementById("reset_play_vrma");
+const reload_vrm_btn = document.getElementById("reload_vrm");
 const tracking_btn = document.getElementById("tracking");
-if (reset_play_vrma_btn) {
-  reset_play_vrma_btn.addEventListener("click", () => {
+if (reload_vrm_btn) {
+  reload_vrm_btn.addEventListener("click", () => {
     vrmaAction.stop();
     vrmaAction.reset();
     playVRMA(VRMA_IDLE, true);
