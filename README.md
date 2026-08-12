@@ -16,7 +16,7 @@ NikaAI is a virtual anime character you can talk to via text or voice. She respo
 - **AI-driven model switching** — the model can request a model switch via the `model` field in its JSON response, in addition to manual switching
 - **Cursor-tracking eyes** — gaze follows the mouse in real time
 - **Head-locked camera** — camera aims at the head bone, so it stays centered as the character moves; drag to orbit, scroll to zoom in/out
-- **Settings panel** — toggle in the bottom-left corner for manual model switching, mouse-tracking on/off, and VRM reload
+- **Settings panel** — toggle in the bottom-left corner for manual model switching, mouse-tracking on/off, reaction to touch on/off and VRM reload
 - **Plug-and-play models** — VRM/VRMA files are auto-detected for the AI; register a model in `VRM_MODELS` (name → path) to also make it manually selectable from the settings panel
 - **Session memory** — conversation context persists server-side for the session
 - **Stack** — Python backend, Three.js + three-vrm frontend, local/open-source TTS, `faster-whisper` STT
