@@ -8,16 +8,18 @@ NikaAI is a virtual anime character you can talk to via text or voice. She respo
 
 ## Features
 
-- **Text & voice input** — chat via a text box or speak to her directly
+- **Text & voice input** — chat via a text box, or hold the mic button to speak
+- **Speech-to-text** — hold-to-record; audio is transcribed server-side with `faster-whisper` and the text is sent back to the frontend input bar
 - **Text-to-speech** — spoken responses with mouth sync; disable with `--no-tts` for voice effects only
 - **Tsundere personality** — short, dismissive, sarcastic replies defined via system prompt, fully customizable
-- **Keyword-driven animations** — response content triggers matching character animations automatically
+- **JSON-driven animations & expressions** — the AI responds with structured JSON (`{"response", "animation", "expression", "model"}`) that drives character animations and facial expressions directly, with current expression status tracked and passed back to the AI each turn
+- **AI-driven model switching** — the model can request a model switch via the `model` field in its JSON response, in addition to manual switching
 - **Cursor-tracking eyes** — gaze follows the mouse in real time
-- **Head-locked camera** — camera aims at the head bone, so it stays centered as the character moves; drag to orbit around her
+- **Head-locked camera** — camera aims at the head bone, so it stays centered as the character moves; drag to orbit, scroll to zoom in/out
 - **Settings panel** — toggle in the bottom-left corner for manual model switching, mouse-tracking on/off, and VRM reload
 - **Plug-and-play models** — VRM/VRMA files are auto-detected for the AI; register a model in `VRM_MODELS` (name → path) to also make it manually selectable from the settings panel
 - **Session memory** — conversation context persists server-side for the session
-- **Stack** — Python backend, Three.js + three-vrm frontend, local/open-source TTS
+- **Stack** — Python backend, Three.js + three-vrm frontend, local/open-source TTS, `faster-whisper` STT
 
 ## Requirements
 - Python 3.10

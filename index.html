@@ -10,8 +10,17 @@
 <div id="head-tag"></div>
 <div class="input-text">
   <input id="user_prompt" autocomplete="off" placeholder="Send a message">
-  <button class="input-button" onclick="sendPrompt()">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <button id="activate_stt" class="stt-button">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+      <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+      <g id="SVGRepo_iconCarrier">
+        <path d="M19 10V12C19 15.866 15.866 19 12 19M5 10V12C5 15.866 8.13401 19 12 19M12 19V22M8 22H16M12 15C10.3431 15 9 13.6569 9 12V5C9 3.34315 10.3431 2 12 2C13.6569 2 15 3.34315 15 5V12C15 13.6569 13.6569 15 12 15Z" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+      </g>
+    </svg>
+  </button>
+  <button id="send_prompt" class="input-button">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <line x1="12" y1="19" x2="12" y2="5"></line>
       <polyline points="5 12 12 5 19 12"></polyline>
     </svg>
@@ -20,6 +29,7 @@
 <div class="button-column">
   <button class="hamburger-btn" onclick="toggleList()"></button>
   <ul id="myList" class="hidden">
+    <li><button id="react_to_touch">React to Touch <span id="touch_id">ON</span></button></li>
     <li><button id="tracking">Mouse tracking <span id="tracking_id">ON</span></button></li>
     <li><button id="reload_vrm">Reload VRM</button></li>
   </ul>
@@ -32,40 +42,6 @@
     listOpen = !listOpen;
     document.getElementById("myList").classList.toggle("hidden", !listOpen);
   }
-
-  function showHeadTag(text) {
-    const el = document.getElementById("head-tag");
-    el.textContent = text;
-    el.style.display = text ? "block" : "none";
-  }
-
-  function sendPrompt() {
-    const input = document.getElementById("user_prompt");
-    if (!input.value || !ws || ws.readyState !== WebSocket.OPEN) return;
-    ws.send("user_prompt:" + input.value);
-    window.dispatchEvent(new Event("thinking"));
-    console.log("User:", input.value)
-    input.value = "";
-  }
-
-  let ws;
-  function connectWS() {
-    ws = new WebSocket("ws://localhost:8766");
-    ws.onopen = () => console.log("Connected to Python server.");
-    ws.onclose = () => setTimeout(connectWS, 1000);
-    ws.onmessage = ({ data }) => {
-      const [cmd, ...rest] = data.split(":");
-      const arg = rest.join(":");
-    }
-    ws.onerror = () => ws.close();
-  }
-  connectWS();
-
-  document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("user_prompt").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); sendPrompt(); }
-    });
-  });
 </script>
 </body>
 </html>

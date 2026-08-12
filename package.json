@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
     "@pixiv/three-vrm": "^3.5.2",
     "@pixiv/three-vrm-animation": "^3.5.2",
     "concurrently": "^10.0.3",

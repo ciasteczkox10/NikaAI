@@ -1,0 +1,10 @@
+THIRD-PARTY SOFTWARE
+
+This project includes third-party software and model components.
+
+Kokoro-82M
+Copyright (c) hexgrad
+
+Kokoro-82M is licensed under the Apache License, Version 2.0.
+Source:
+https://huggingface.co/hexgrad/Kokoro-82M

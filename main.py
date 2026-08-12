@@ -1,4 +1,4 @@
-import asyncio, websockets, re, sys, time
+import asyncio, websockets, sys, json
 from openai import OpenAI, BadRequestError
 from config import (
     API_KEY,
@@ -8,32 +8,35 @@ from config import (
     VRM_MODELS,
     ALLOWED_VRM_ANIMATIONS,
     VRM_ANIMATIONS,
-    VRMA_BASE,
-    PITCH
+    VRMA_BASE
 )
 
 def print_usage():
-    print("Usage: py main.py [--no-tts]")
+    print("Usage: py main.py [--no-tts] [--no-stt]")
 
-use_tts = True
-if len(sys.argv) > 2:
-    print(f"Wrong argument(s): {' '.join(sys.argv[1:])}")
+use_tts, use_stt = True, True
+
+valid_flags = {"--no-tts", "--no-stt"}
+args = sys.argv[1:]
+
+if len(args) > 2 or any(a not in valid_flags for a in args) or len(set(args)) != len(args):
+    print(f"Wrong argument(s): {' '.join(args)}")
     print_usage()
     sys.exit(1)
 
-if len(sys.argv) == 2:
-    if sys.argv[1] == "--no-tts":
-        use_tts = False
-    else:
-        print(f"Wrong argument: {sys.argv[1]}")
-        print_usage()
-        sys.exit(1)
+if "--no-tts" in args:
+    use_tts = False
+if "--no-stt" in args:
+    use_stt = False
+
 if use_tts:
     from tts.tts import generate_tts
+if use_stt:
+    from stt.stt import transcribe
 
 connected_vrm = set()
 client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
-
+current_model = None
 messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
 def chat(user_input: str) -> str:
@@ -46,7 +49,7 @@ def chat(user_input: str) -> str:
         )
         llm_response = res.choices[0].message.content
         messages.append({"role": "assistant", "content": llm_response})
-        return llm_response
+        return json.loads(llm_response)
     except BadRequestError:
         return "Bad Request Error"
 
@@ -56,29 +59,34 @@ async def broadcast(msg: str):
         await ws.send(msg)
 
 
-async def process_input(user_input: str, chat_ws):
+async def process_input(current_model: str, user_input: str):
+    user_prompt = {
+        "current_model": current_model,
+        "user_prompt": user_input
+        }
+    print(user_prompt)
+    llm_response = animation = model = None
+
     response = await asyncio.get_event_loop().run_in_executor(None, chat, user_input)
 
-    tags = re.findall(r"\[(.*?)\]", response)
-    reset = "reset" in tags
-    anim = next((VRM_ANIMATIONS[t] for t in tags if t in ALLOWED_VRM_ANIMATIONS), None)
+    if response.get("response"):
+        llm_response = response["response"]
+    if response.get("animation"):
+        animation = response["animation"]
+    if response.get("model"):
+        model = response["model"]
 
-    llm_response_clean = re.sub(r"\[.*?\]", "", response).strip()
-    print(f"llm_response:{response}")
-    if use_tts:
-        generate_tts(llm_response_clean, PITCH)
 
-    await broadcast(f"llm_response:{llm_response_clean}")
-    if use_tts:
-        await broadcast(f"tts_audio:{llm_response_clean}")
-    else:
-        await broadcast(f"voice_effect:{llm_response_clean}")
+    print(f"llm_response:\n{response}")
+    if use_tts: generate_tts(llm_response)
 
-    if reset:
-        await broadcast("reset")
-    elif anim:
-        prefix = "play"
-        await broadcast(f"{prefix}:{VRMA_BASE}{anim}")
+    await broadcast(f"llm_response:{llm_response}")
+
+    audio_type  = "tts_audio:" if use_tts else "voice_effect:"
+    await broadcast(f"{audio_type}{llm_response}")
+
+    if animation: await broadcast(f"animation:{animation}")
+    if model: await broadcast(f"model:{model}")
 
 
 async def handler_ws(ws):
@@ -86,11 +94,16 @@ async def handler_ws(ws):
     connected_vrm.add(ws)
     try:
         async for msg in ws:
+            if isinstance(msg, bytes):
+                result = transcribe(msg)
+                await broadcast(f"stt_result:{result['text']}")
+                continue
+            if msg.startswith("current_model:"):
+                current_model = msg.replace("current_model:", "")
             if msg.startswith("user_prompt:"):
-                msg = msg.replace("user_prompt:", "")
-                print(f"user_prompt:{msg}")
-                connected_vrm.discard(ws)
-                await process_input(msg, ws)
+                user_input = msg.replace("user_prompt:", "")
+                print(f"user_prompt:{user_input}")
+                await process_input(current_model, user_input)
 
     except Exception as e:
         print("WebSocket disconnected:", e)
@@ -111,6 +124,7 @@ if __name__ == "__main__":
         print("MODELS:\n" + ALLOWED_VRM_MODELS)
         print("ANIMATIONS:\n" + ALLOWED_VRM_ANIMATIONS)
         print("TTS Enabled" if use_tts else "TTS Disabled")
+        print("STT Enabled" if use_stt else "STT Disabled")
         asyncio.run(main())
     except Exception as e:
         print(e); input()

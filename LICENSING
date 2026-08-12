@@ -19,21 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-THIRD-PARTY SOFTWARE
-
-This project uses the Kokoro-82M text-to-speech model by hexgrad.
-
-Kokoro-82M is licensed under the Apache License, Version 2.0.
-The Kokoro-82M model is obtained from:
-https://huggingface.co/hexgrad/Kokoro-82M
-
-The Apache License, Version 2.0 permits use, reproduction, modification,
-distribution, sublicensing, and sale of the software, subject to the terms
-and conditions of that license.
-
-A copy of the Apache License, Version 2.0 is available at:
-https://www.apache.org/licenses/LICENSE-2.0
-
-Kokoro-82M is a third-party component and is not covered by the MIT License
-above. Its use and distribution remain subject to the Apache License, Version 2.0.

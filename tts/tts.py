@@ -1,14 +1,13 @@
-import logging
-
+import logging, warnings, os, sys
 logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
-
-import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 from kokoro import KPipeline #type: ignore
 import soundfile as sf
 import subprocess
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import TTS_VOICE, TTS_PITCH #type: ignore
 
 pipeline = KPipeline(lang_code="a", repo_id="hexgrad/Kokoro-82M")
 
@@ -22,8 +21,8 @@ def pitch_audio(input_file: str, pitch: float):
         "./tts/output.wav"
     ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-def generate_tts(text: str, pitch: float):
-    generator = pipeline(text, voice="af_sarah")
+def generate_tts(text: str):
+    generator = pipeline(text, voice=TTS_VOICE)
     for _, _, audio in generator:
         sf.write("./tts/output.wav", audio, 24000)
-    pitch_audio("./tts/output.wav", pitch)
+    pitch_audio("./tts/output.wav", TTS_PITCH)
