@@ -12,6 +12,10 @@ if not BASE_URL:
 if not MODEL:
     raise RuntimeError("MODEL is not set. Please configure your .env file.")
 
+CONTEXT_MAX_MESSAGES = 50 # Maximum number of messages to keep in context
+CONTEXT_FILE = "./context.json"
+  
+
 TTS_PITCH = 1.2
 TTS_VOICE = "af_sarah"
 STT_LANGUAGE = "en"

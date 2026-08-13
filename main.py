@@ -1,5 +1,9 @@
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+os.environ["OMP_NUM_THREADS"] = "1"
 import asyncio, websockets, sys, json
 from openai import OpenAI, BadRequestError
+from context import load_context, save_context, get_messages_with_system
 from config import (
     API_KEY,
     BASE_URL, MODEL,
@@ -37,7 +41,8 @@ if use_stt:
 connected_vrm = set()
 client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
 current_model = None
-messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+
+messages = load_context()
 
 def chat(user_input: str) -> str:
     global messages
@@ -45,10 +50,13 @@ def chat(user_input: str) -> str:
         messages.append({"role": "user", "content": user_input})
         res = client.chat.completions.create(
             model=MODEL,
-            messages=messages,
+            messages=get_messages_with_system(messages),
         )
         llm_response = res.choices[0].message.content
         messages.append({"role": "assistant", "content": llm_response})
+        save_context(messages)
+        for msg in messages:
+            print(f"{msg['role']}: {msg['content']}")
         return json.loads(llm_response)
     except BadRequestError:
         return "Bad Request Error"
@@ -64,7 +72,7 @@ async def process_input(current_model: str, user_input: str):
         "current_model": current_model,
         "user_prompt": user_input
         }
-    print(user_prompt)
+    #print(f"user_prompt: {user_prompt}")
     llm_response = animation = model = None
 
     response = await asyncio.get_event_loop().run_in_executor(None, chat, user_input)
@@ -77,7 +85,7 @@ async def process_input(current_model: str, user_input: str):
         model = response["model"]
 
 
-    print(f"llm_response:\n{response}")
+    #print(f"llm_response:\n{response}")
     if use_tts: generate_tts(llm_response)
 
     await broadcast(f"llm_response:{llm_response}")
@@ -87,7 +95,6 @@ async def process_input(current_model: str, user_input: str):
 
     if animation: await broadcast(f"animation:{animation}")
     if model: await broadcast(f"model:{model}")
-
 
 async def handler_ws(ws):
     print("WebSocket connected")
@@ -102,7 +109,6 @@ async def handler_ws(ws):
                 current_model = msg.replace("current_model:", "")
             if msg.startswith("user_prompt:"):
                 user_input = msg.replace("user_prompt:", "")
-                print(f"user_prompt:{user_input}")
                 await process_input(current_model, user_input)
 
     except Exception as e:
