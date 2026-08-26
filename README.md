@@ -14,12 +14,12 @@ NikaAI is a virtual anime character you can talk to via text or voice. She respo
 - **Tsundere personality** — short, dismissive, sarcastic replies defined via system prompt, fully customizable
 - **JSON-driven animations & expressions** — the AI responds with structured JSON (`{"response", "animation", "expression", "model"}`) that drives character animations and facial expressions directly, with current expression status tracked and passed back to the AI each turn
 - **AI-driven VRM model switching** — the AI can request a VRM avatar switch via the `model` field in its JSON response, in addition to manual switching
-- **Cursor-tracking eyes** — gaze follows the mouse in real time
+- **Cursor-tracking eyes and head** — gaze follows the mouse in real time, with the head naturally following the eye movement
 - **Head-locked camera** — camera aims at the head bone, so it stays centered as the character moves; drag to orbit, scroll to zoom in/out
 - **Settings panel** — toggle in the bottom-left corner for manual model switching, mouse-tracking on/off, reaction to touch on/off and VRM reload
 - **Plug-and-play models** — VRM/VRMA files are auto-detected for the AI; register a model in `VRM_MODELS` (name → path) to also make it manually selectable from the settings panel
 - **Session memory** — conversation context persists server-side for the session
-- **Stack** — Python backend, Three.js + three-vrm frontend, local/open-source TTS, `faster-whisper` STT
+- **Stack** — Python backend, Three.js + three-vrm frontend, `Pocket-tts` for TTS, `faster-whisper` STT
 
 ## Requirements
 - Python 3.10
