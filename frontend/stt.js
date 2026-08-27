@@ -1,7 +1,6 @@
 let recorder = null;
 let stream = null;
 let chunks = [];
-
 export async function startRecording(ws) {
     // Start recording audio from the user's microphone and send it to the server via WebSocket
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {

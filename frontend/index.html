@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>NikaAI-lite</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="icon" type="image/png" href="/favicon.ico">
+</head>
+<body>
+<div id="head-tag"></div>
+<span id="ws_status" class="ws-status">
+  <svg class="ws-icon" viewBox="0 0 512.42 512.42" fill="currentColor">
+    <path d="M509.313,67.45c-4.16-4.16-10.88-4.267-15.04-0.107L134.06,422.33l-115.2-121.6c-3.733-4.48-10.453-5.12-15.04-1.387
+    c-4.48,3.733-5.12,10.453-1.387,15.04c0.32,0.32,0.533,0.64,0.853,0.96l122.667,129.493c1.92,2.133,4.693,3.307,7.573,3.307h0.213
+    c2.773,0,5.44-1.067,7.467-3.093l368-362.667C513.473,78.33,513.473,71.61,509.313,67.45z"/>
+  </svg>
+  <svg class="ws-icon-not" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M1.225 21.225A1.678 1.678 0 0 0 2.707 22H22.28a1.68 1.68 0 0 0 1.484-.775 1.608 1.608 0 0 0 .003-1.656L13.995 1.827a1.745 1.745 0 0 0-2.969 0l-9.8 17.742a1.603 1.603 0 0 0 0 1.656zm.859-1.143l9.82-17.773A.71.71 0 0 1 12.508 2a.73.73 0 0 1 .629.342l9.751 17.708a.626.626 0 0 1 .017.662.725.725 0 0 1-.626.288H2.708a.723.723 0 0 1-.623-.286.605.605 0 0 1-.001-.632zM13 15h-1V8h1zm-1.5 2.5a1 1 0 1 1 1 1 1.002 1.002 0 0 1-1-1z"/>
+  </svg>
+  <span class="ws-label"></span>
+</span>
+<div id="loading_spinner" class="loading-spinner">
+  <svg width="32" height="32" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" fill="hsl(228, 97%, 42%)">
+    <defs>
+      <linearGradient id="RadialGradient8932">
+        <stop offset="0%" stop-color="currentColor" stop-opacity="1"/>
+        <stop offset="100%" stop-color="currentColor" stop-opacity="0.25"/>
+      </linearGradient>
+    </defs>
+    <style>
+      @keyframes spin8932 {
+        to { transform: rotate(360deg); }
+      }
+      #circle8932 {
+        transform-origin: 50% 50%;
+        stroke: url(#RadialGradient8932);
+        fill: none;
+        animation: spin8932 .5s infinite linear;
+      }
+    </style>
+    <circle cx="10" cy="10" r="8" id="circle8932" stroke-width="2"/>
+  </svg>
+</div>
+<div class="input-text">
+  <input id="user_prompt" autocomplete="off" placeholder="Send a message">
+  <button id="activate_stt" class="stt-button">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+      <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+      <g id="SVGRepo_iconCarrier">
+        <path d="M19 10V12C19 15.866 15.866 19 12 19M5 10V12C5 15.866 8.13401 19 12 19M12 19V22M8 22H16M12 15C10.3431 15 9 13.6569 9 12V5C9 3.34315 10.3431 2 12 2C13.6569 2 15 3.34315 15 5V12C15 13.6569 13.6569 15 12 15Z" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+      </g>
+    </svg>
+  </button>
+  <button id="send_prompt" class="input-button">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="19" x2="12" y2="5"></line>
+      <polyline points="5 12 12 5 19 12"></polyline>
+    </svg>
+  </button>
+</div>
+<div class="button-column">
+  <button class="hamburger-btn" onclick="toggleList()"></button>
+  <ul id="myList" class="hidden">
+    <li><button id="react_to_touch">React to Touch <span id="touch_id">ON</span></button></li>
+    <li><button id="tracking">Mouse tracking <span id="tracking_id">ON</span></button></li>
+    <li><button id="reload_vrm">Reload VRM</button></li>
+  </ul>
+</div>
+<script type="module" src="/main.js"></script>
+<script>
+  let listOpen = false;
+
+  function toggleList() {
+    listOpen = !listOpen;
+    document.getElementById("myList").classList.toggle("hidden", !listOpen);
+  }
+
+  // Controls the WebSocket status pill.
+  // setWsStatus("connected", 3)      -> shows green "Connected" for 3s, then slides away
+  // setWsStatus("not_connected")     -> shows red "Not connected" and stays visible
+  let wsHideTimer = null;
+
+  function setWsStatus(state, showSeconds = 3) {
+    const el = document.getElementById("ws_status");
+    const label = el.querySelector(".ws-label");
+
+    clearTimeout(wsHideTimer);
+    el.classList.remove("connected", "not_connected");
+    el.classList.add(state);
+    label.textContent = state === "connected" ? "Connected" : "Not connected";
+
+    // force reflow so the "show" transition re-triggers if called rapidly
+    void el.offsetWidth;
+    el.classList.add("show");
+
+    if (state === "connected") {
+      wsHideTimer = setTimeout(() => {
+        el.classList.remove("show");
+      }, showSeconds * 1000);
+    }
+  }
+
+  window.setWsStatus = setWsStatus;
+</script>
+</body>
+</html>

@@ -12,5 +12,10 @@
     "onnxruntime-node@1.24.3": true,
     "sharp@0.34.5": true,
     "protobufjs@7.6.5": true
+  },
+  "devDependencies": {
+    "dotenv": "^17.4.2",
+    "openai": "^7.5.0",
+    "sirv": "^3.0.2"
   }
 }

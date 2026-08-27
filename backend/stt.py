@@ -1,16 +1,14 @@
-import tempfile, uvicorn, sys, os
+import tempfile, uvicorn, os
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from faster_whisper import WhisperModel #type: ignore
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import STT_LANGUAGE #type: ignore
+print("Loading Whisper...")
+from faster_whisper import WhisperModel
+from config import STT_LANGUAGE
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-print("Loading Whisper...")
 model = WhisperModel("base", device="auto", compute_type="auto")
-print("Whisper ready!")
 
 
 def transcribe(audio_bytes: bytes, suffix: str = ".webm") -> dict:

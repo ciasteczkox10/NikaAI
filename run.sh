@@ -1,4 +1,4 @@
 #!/bin/bash
 
-.venv/bin/python main.py &
+.venv/bin/python -m backend.main &
 npx vite

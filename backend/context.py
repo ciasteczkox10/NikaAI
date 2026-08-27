@@ -1,5 +1,4 @@
-import json
-import os
+import json, os
 from config import SYSTEM_PROMPT, CONTEXT_MAX_MESSAGES, CONTEXT_FILE
 
 def load_context():
