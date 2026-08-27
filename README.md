@@ -8,13 +8,13 @@ NikaAI is a virtual anime character you can talk to via text or voice. She respo
 
 ## Features
 
-- **Text & voice input** — chat via a text box, or hold the mic button (250ms hold) to speak
+- **Text & voice input** — chat via a text box, or hold the mic button to speak
 - **Speech-to-text** — hold-to-record; audio transcribed server-side with `faster-whisper` (Whisper base model), text sent back to the frontend input bar
-- **Text-to-speech** — spoken responses with mouth sync (viseme-based lip sync); custom voice (`my_voice.safetensors`); disable with `--no-tts` for voice effects only; optional Flask TTS endpoint on port 5000
+- **Text-to-speech** — spoken responses with mouth sync (viseme-based lip sync); custom voice (`voice.safetensors`); disable with `--no-tts` for voice effects only
 - **Tsundere personality** — short, dismissive, sarcastic replies defined via system prompt, fully customizable
-- **JSON-driven animations & expressions** — the AI responds with structured JSON (`{"response", "animation", "expression", "model"}`) that drives character animations and facial expressions directly, with current expression status tracked and passed back to the AI each turn
+- **JSON-driven animations & expressions** — the AI responds with structured JSON (`{"response", "animation", "expression", "model"}`) that drives character animations and facial expressions directly.
 - **AI-driven VRM model switching** — the AI can request a VRM avatar switch via the `model` field in its JSON response, in addition to manual switching
-- **Cursor-tracking eyes and head** — gaze follows the mouse in real time with spring physics; head naturally follows eye movement (reduced ratio); eyes look at input bar when typing
+- **Cursor-tracking eyes and head** — gaze follows the mouse in real time with spring physics; head naturally follows eye movement; eyes look at input bar when typing
 - **Head-locked camera** — camera aims at the head bone so it stays centered as the character moves; right-drag to orbit, scroll to zoom in/out
 - **Settings panel** — toggle in the bottom-left corner for manual model switching, mouse-tracking on/off, reaction to touch on/off, and VRM reload
 - **Touch reactions** — click/tap the model's hair or face to trigger random voiced reactions with audio and angry expression
@@ -23,7 +23,7 @@ NikaAI is a virtual anime character you can talk to via text or voice. She respo
 - **Plug-and-play models & animations** — VRM/VRMA files are auto-detected from `assets/models/` and `assets/vrma/` at startup; no manual registration in `frontend/config.js` is required for models to appear in the selection menu
 - **Session memory** — conversation context persists server-side in `backend/context.json` (max 50 messages)
 - **Model activation delay** — 400ms delay before showing model after load (prevents pop-in)
-- **Stack** — Python backend (WebSocket on 8766, optional Flask on 5000, optional FastAPI STT on 8000), Three.js + `@pixiv/three-vrm` frontend, `Pocket-tts` for TTS, `faster-whisper` for STT
+- **Stack** — Python backend (WebSocket on 8766, optional FastAPI STT on 8000), Three.js + `@pixiv/three-vrm` frontend, `Pocket-tts` for TTS, `faster-whisper` for STT
 
 ## Requirements
 
@@ -89,36 +89,6 @@ npx vite
 python backend/main.py --no-tts   # Disable TTS (voice effects only)
 python backend/main.py --no-stt   # Disable speech-to-text
 ```
-
-## Ports
-
-- `8766` — WebSocket (backend ↔ frontend)
-- `5000` — Flask TTS endpoint (optional, disabled by default)
-- `8000` — FastAPI STT endpoint (optional, used when STT runs as server)
-- `5173` — Vite dev server (default)
-
-## Assets
-
-**VRM Models** (in `assets/models/`):
-- `nika.vrm`
-- `nika_hat_with_cat_ears.vrm`
-- `nika_sweater.vrm`
-
-**VRMA Animations** (in `assets/vrma/`):
-- `idle.vrma`, `thinking.vrma`, `surprised.vrma`, `sleepy.vrma`, `show_body.vrma`, `sad.vrma`, `relax.vrma`, `pose.vrma`, `peace_sign.vrma`, `lookaround.vrma`, `jump.vrma`, `goodbye.vrma`, `clapping.vrma`, `blush.vrma`, `blowkiss.vrma`, `backflip.vrma`, `angry.vrma`
-
-**Reaction Sounds** (in `assets/sounds/`):
-- `hey.wav`, `stop_it.wav`, `that_tickles.wav`, `stop_touching_my_head.wav`, `please_dont_touch_my_head.wav`, `dont_touch_my_head.wav`
-
-## Testing / Verification
-
-No formal test suite. Verify by:
-
-1. Open `http://localhost:5173`
-2. Check WS connection in browser console
-3. Send text message → should get AI response + animation
-4. Hold mic button → STT transcription appears in input
-5. Click model's hair/face → triggers voiced reaction
 
 ## License
 
