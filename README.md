@@ -3,6 +3,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10-blue)
 ![Node.js](https://img.shields.io/badge/Node.js-required-green)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
+![Preview](preview.png)
 
 NikaAI is a virtual anime character you can talk to via text or voice. She responds in real time with a tsundere personality, synced speech, and reactive 3D animations rendered in the browser.
 
