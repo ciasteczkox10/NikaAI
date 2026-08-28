@@ -103,7 +103,7 @@ run.bat     # Windows
 
 ```bash
 npx vite
-.venv\Scripts\python.exe backend.main
+.venv\Scripts\python.exe -m backend.main
 ```
 
 #### Linux/macOS
