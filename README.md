@@ -103,21 +103,21 @@ run.bat     # Windows
 
 ```bash
 npx vite
-.venv\Scripts\python.exe backend\main.py
+.venv\Scripts\python.exe backend.main
 ```
 
 #### Linux/macOS
 
 ```bash
 npx vite
-.venv/bin/python backend/main.py
+.venv/bin/python -m backend.main
 ```
 
 ## Common Flags
 
 ```bash
-python backend/main.py --no-tts   # Disable TTS (voice effects only)
-python backend/main.py --no-stt   # Disable speech-to-text
+python -m backend.main --no-tts   # Disable TTS (voice effects only)
+python -m backend.main --no-stt   # Disable speech-to-text
 ```
 
 ## License
