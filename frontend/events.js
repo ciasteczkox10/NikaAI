@@ -1,4 +1,5 @@
-import { loadModel, onBoneTouch_old, ws } from "./main.js";
+import { loadModel, ws } from "./main.js";
+import { onBoneTouch_old } from "./bone_touch.js";
 import { sendPrompt, inputTextPlaceholder } from "./utils.js";
 import { VRM } from "./vrm.js";
 import { startRecording } from "./stt.js";
@@ -17,7 +18,7 @@ export let EVENTS = {
   mouse_y: undefined,
 };
 
-export function eventListeners(camera, getColliders, renderer, raycaster) {
+export function eventListeners(camera, getBodyMeshes, renderer, raycaster) {
   document.addEventListener("contextmenu", (e) => e.preventDefault());
 
   document.addEventListener("pointerdown", (e) => {
@@ -28,7 +29,7 @@ export function eventListeners(camera, getColliders, renderer, raycaster) {
     if (e.button !== 0) return;
     EVENTS.is_left_clicking = true;
     if (DEFAULT_SETTINGS.touch_id) {
-      onBoneTouch_old(camera, getColliders(), renderer, raycaster, e);
+      onBoneTouch_old(camera, getBodyMeshes(), renderer.domElement, raycaster, e);
     }
   });
 

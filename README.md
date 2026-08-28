@@ -21,7 +21,7 @@ NikaAI is a virtual anime character you can talk to via text or voice. She respo
 - **Touch reactions** — click/tap the model's hair or face to trigger random voiced reactions with audio and angry expression
 - **Auto-blinking** — natural random blink intervals
 - **Thinking & idle animations** — plays `thinking.vrma` while AI processes; loops `idle.vrma` by default
-- **Plug-and-play models & animations** — VRM/VRMA files are auto-detected from `assets/models/` and `assets/vrma/` at startup; no manual registration in `frontend/config.js` is required for models to appear in the selection menu
+- **Plug-and-play models & animations** — VRM models are auto-detected from `assets/models/<name>/model.vrm` with optional `metadata.json`; VRMA animations from `assets/vrma/` at startup; no manual registration required for models to appear in the selection menu
 - **Session memory** — conversation context persists server-side in `backend/context.json` (max 50 messages)
 - **Model activation delay** — 400ms delay before showing model after load (prevents pop-in)
 - **Stack** — Python backend (WebSocket on 8766, optional FastAPI STT on 8000), Three.js + `@pixiv/three-vrm` frontend, `Pocket-tts` for TTS, `faster-whisper` for STT
@@ -58,6 +58,14 @@ API_KEY=your_api_key
 BASE_URL=your_base_url
 MODEL=your_model
 ```
+
+### Add models:
+
+Place VRM files in `assets/models/<name>/model.vrm` (e.g. `assets/models/nika/model.vrm`). Optional `metadata.json` in the same folder can provide additional info.
+
+### Add animations:
+
+Drop `.vrma` files into `assets/vrma/` (e.g. `assets/vrma/idle.vrma`).
 
 ### Launch the app:
 

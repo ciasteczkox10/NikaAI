@@ -1,4 +1,4 @@
-import { VRM_MODELS } from "@config/config.js";
+import { VRM_MODELS, VRM_METADATA } from "@config/config.js";
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -39,7 +39,11 @@ export function sendPrompt(ws, model_path, current_expression) {
         return;
     }
     let current_model_name = Object.keys(VRM_MODELS).find(k => VRM_MODELS[k] === model_path);
-    ws.send("current_model:" + current_model_name);
+    let current_model_info = {
+        "name": VRM_METADATA[current_model_name].name || "",
+        "description": VRM_METADATA[current_model_name].description || ""
+    }
+    ws.send("current_model:" + JSON.stringify(current_model_info));
     ws.send("current_expression:" + current_expression);
     ws.send("user_prompt:" + input.value);
     window.dispatchEvent(new Event("thinking"));

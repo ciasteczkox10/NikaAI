@@ -30,14 +30,13 @@ async def broadcast(msg: str):
     for ws in connected_vrm:
         await ws.send(msg)
 
-async def process_input(current_model: str, current_expression: dict, user_input: str):
+async def process_input(current_model_info: dict, current_expression: dict, user_input: str):
     user_prompt = {
-        "current_model": current_model,
+        "current_model": current_model_info,
         "current_expression": current_expression,
         "user_prompt": user_input
     }
     print(f"user_prompt:\n{user_prompt}")
-
     response = await asyncio.get_event_loop().run_in_executor(None, chat, json.dumps(user_prompt))
 
     print(f"llm_response:\n{response}")
@@ -73,12 +72,12 @@ async def handler_ws(ws):
                 await broadcast(f"stt_result:{result['text']}")
                 continue
             if msg.startswith("current_model:"):
-                current_model = msg.replace("current_model:", "")
+                current_model_info = json.loads(msg.replace("current_model:", ""))
             if msg.startswith("current_expression:"):
                 current_expression = json.loads(msg.replace("current_expression:", ""))
             if msg.startswith("user_prompt:"):
                 user_input = msg.replace("user_prompt:", "")
-                await process_input(current_model, current_expression, user_input)
+                await process_input(current_model_info, current_expression, user_input)
 
     except Exception as e:
         print("WebSocket disconnected:", e)
@@ -94,7 +93,7 @@ if __name__ == "__main__":
     try:
         print("TTS Enabled" if use_tts else "TTS Disabled")
         print("STT Enabled" if use_stt else "STT Disabled")
-        print(SYSTEM_PROMPT)
+        #print(SYSTEM_PROMPT)
         asyncio.run(main())
     except Exception as e:
         print(e); input()

@@ -1,4 +1,4 @@
-import { VRM_FILES } from 'virtual:vrm-models';
+import { VRM_FILES, VRM_METADATA } from 'virtual:vrm-models';
 import config from "@config/config.json";
 
 export const PATH = { // Base paths for assets
@@ -8,9 +8,9 @@ export const PATH = { // Base paths for assets
 };
 
 export const VRM_MODELS = Object.fromEntries(
-  // Create a mapping of VRM model names to their file paths
-  VRM_FILES.map(f => [f.replace('.vrm', ''), `${PATH.VRM_BASE}${f}`])
+  VRM_FILES.map(name => [name, `${PATH.VRM_BASE}${name}/model.vrm`]),
 )
+export { VRM_METADATA };
 
 export const DEFAULT_MODEL_SETTINGS = {
   VRM_DEFAULT_MODEL: VRM_MODELS[config.default.default_model], // Default VRM model to load on startup.
@@ -80,12 +80,12 @@ export const REACTION_MESSAGES = {
   If you want to add more reactions, add them here as key-value pairs, where the key is the message and the value is the path to the corresponding audio file.
   If you want to use another TTS voice for the reaction, you must generate the audio file and add it to the assets/sounds folder, then reference it here.
   */
-  "Hey!": `${PATH.SOUNDS_BASE}/hey.wav`,
-  "Stop it!": `${PATH.SOUNDS_BASE}/stop_it.wav`,
-  "That tickles!": `${PATH.SOUNDS_BASE}/that_tickles.wav`,
-  "Stop touching my head!": `${PATH.SOUNDS_BASE}/stop_touching_my_head.wav`,
-  "Please don't touch my head!": `${PATH.SOUNDS_BASE}/please_dont_touch_my_head.wav`,
-  "Don't touch my head!": `${PATH.SOUNDS_BASE}/dont_touch_my_head.wav`
+  "Hey!": `${PATH.SOUNDS_BASE}hey.wav`,
+  "Stop it!": `${PATH.SOUNDS_BASE}stop_it.wav`,
+  "That tickles!": `${PATH.SOUNDS_BASE}that_tickles.wav`,
+  "Stop touching my head!": `${PATH.SOUNDS_BASE}stop_touching_my_head.wav`,
+  "Please don't touch my head!": `${PATH.SOUNDS_BASE}please_dont_touch_my_head.wav`,
+  "Don't touch my head!": `${PATH.SOUNDS_BASE}dont_touch_my_head.wav`
 };
 
 export const HAIR_TOUCH_BONES =[ // List of bone names in the VRM model that correspond to hair sections. Used to detect when the user touches the model's hair.

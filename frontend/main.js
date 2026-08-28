@@ -5,7 +5,6 @@ import {
   MODEL_ACTIVATION_DELAY, // ms delay before enabling model visibility after load
   FOLLOW_SPEED, // mouse drag sensitivity and camera follow speed
   DEFAULT_MODEL_SETTINGS as DM, DEFAULT_SETTINGS as DS, // default model settings and default settings for the options in the settings menu
-  REACTION_MESSAGES, HAIR_TOUCH_BONES, FACE_TOUCH_BONES, // reaction messages and touch bones for hair and face
   CAMERA_SETTINGS, // camera settings for position and rotation
 } from "@config/config.js";
 import { 
@@ -21,12 +20,12 @@ import {
   updateEyeTracking,
   head_tag_el,
   showHeadTag,
-  setExpression,
   showExpressionForDuration
 } from "./vrm.js";
 import {
   updateLipSync // update lip sync based on audio
 } from "./audio.js";
+import { createBoneColliders, debugTouchBoneCoverage } from "./bone_touch.js";
 let ws_con = true;
 
 const raycaster = new THREE.Raycaster();
@@ -45,130 +44,16 @@ const bone = (name) => VRM.vrm?.humanoid?.getNormalizedBoneNode(name);
 
 document.addEventListener("pointerdown", () => { once: true });
 
-let reactionGeneration = 0;
-let reaction_message, reaction_message_last;
-async function reactToTouch() {
-    if (!VRM.vrm?.expressionManager) return;
-    const generation = ++reactionGeneration;
-    const messages = Object.entries(REACTION_MESSAGES);
-    
-    do {
-        const [key, value] =
-            messages[Math.floor(Math.random() * messages.length)];
-
-        reaction_message = { key, value };
-    } while (reaction_message.key === reaction_message_last);
-
-    reaction_message_last = reaction_message.key;
-
-    showHeadTag(
-        reaction_message.key,
-        "Effect",
-        reaction_message.value
-    );
-
-    await setExpression(VRM.vrm, "angry", 0.5, 250);
-
-    if (generation !== reactionGeneration) return;
-    await sleep(1500);
-    if (generation !== reactionGeneration) return;
-    await setExpression(VRM.vrm, "angry", 0.0, 250);
-    if (generation !== reactionGeneration) return;
-    await setExpression(
-      VRM.vrm,
-      DM.DEFAULT_EXPRESSION_NAME,
-      DM.DEFAULT_EXPRESSION_VALUE,
-      250
-    );
-}
-
-function createBoneColliders(vrm, radius = 0.03) {
-  const colliders = [];
-  vrm.scene.traverse((obj) => {
-    if (obj.isBone) {
-      const geo = new THREE.SphereGeometry(radius, 6, 6);
-      const mat = new THREE.MeshBasicMaterial({ visible: false });
-      const sphere = new THREE.Mesh(geo, mat);
-      sphere.userData.bone = obj;
-      obj.add(sphere);
-      colliders.push(sphere);
-    }
-  });
-  return colliders;
-}
-
-export function onBoneTouch_old(camera, colliders, domElement, raycaster, event) {
-  const rect = domElement.getBoundingClientRect();
-  const x = event.touches ? event.touches[0].clientX : event.clientX;
-  const y = event.touches ? event.touches[0].clientY : event.clientY;
-
-  pointer.x = ((x - rect.left) / rect.width) * 2 - 1;
-  pointer.y = -((y - rect.top) / rect.height) * 2 + 1;
-
-  raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(colliders, false);
-
-  if (hits.length > 0) {
-    const bone = hits[0].object.userData.bone;
-    if (HAIR_TOUCH_BONES.includes(bone.name)) {
-      console.log('Touched hair bone:', bone.name);
-      reactToTouch();
-    }
-  }
-}
-
-function onBoneTouch(camera, meshes, domElement) { // TODO: Fix lag spike
-  const rect = domElement.getBoundingClientRect();
-  const x = event.touches ? event.touches[0].clientX : event.clientX;
-  const y = event.touches ? event.touches[0].clientY : event.clientY;
-
-  pointer.x = ((x - rect.left) / rect.width) * 2 - 1;
-  pointer.y = -((y - rect.top) / rect.height) * 2 + 1;
-
-  raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(meshes, true);
-  if (hits.length === 0) return null;
-
-  const hit = hits[0];
-  const mesh = hit.object;
-
-  // rigid mesh parented to a bone (no skin weights) - fallback
-  if (!mesh.isSkinnedMesh || !hit.face || !mesh.geometry.attributes.skinIndex) {
-    let p = mesh;
-    while (p && !p.isBone) p = p.parent;
-    if (p) console.log('Touched bone:', p.name);
-    return p || null;
-  }
-
-  const si = mesh.geometry.attributes.skinIndex;
-  const sw = mesh.geometry.attributes.skinWeight;
-  const boneScore = new Map();
-
-  for (const vi of [hit.face.a, hit.face.b, hit.face.c]) {
-    const idxs = [si.getX(vi), si.getY(vi), si.getZ(vi), si.getW(vi)];
-    const wts  = [sw.getX(vi), sw.getY(vi), sw.getZ(vi), sw.getW(vi)];
-    for (let k = 0; k < 4; k++) {
-      if (wts[k] > 0) boneScore.set(idxs[k], (boneScore.get(idxs[k]) || 0) + wts[k]);
-    }
-  }
-
-  let bestIdx = -1, bestScore = -1;
-  boneScore.forEach((score, idx) => { if (score > bestScore) { bestScore = score; bestIdx = idx; } });
-  if (bestIdx === -1) return null;
-
-  const bone = mesh.skeleton.bones[bestIdx];
-  if (HAIR_TOUCH_BONES.includes(bone.name)) {
-    console.log('Touched hair bone:', bone.name);
-    reactToTouch();
-  }
-}
-
 // loadModel wraps vrm.js's loadVRM with main.js-specific post-load work
 // (eye-tracking activation delay, legacy sphere-collider touch system) that
 // depends on state owned here, not in vrm.js.
 let colliders;
+
 function onModelLoaded() {
-  if (EVENTS.touch_old) colliders = createBoneColliders(VRM.vrm);
+  if (EVENTS.touch_old) {
+    colliders = createBoneColliders(VRM.vrm, { debug: false });
+    //debugTouchBoneCoverage(VRM.vrm);
+  }
 }
 export function loadModel(model_path) {
   document.getElementById('loading_spinner').classList.add('show');
@@ -207,7 +92,7 @@ function init() {
   
   initThree(_scene, _camera, _renderer, _clock);
 
-  eventListeners(camera, () => colliders, renderer.domElement, raycaster);
+  eventListeners(camera, () => colliders, renderer, raycaster);
   buildModelButtons(VRM_MODELS, loadModel, DS);
   loadModel(DM.VRM_DEFAULT_MODEL);
   function WSCommandHandler(event) {
@@ -222,7 +107,7 @@ function init() {
       if (cmd === "no_tts_audio") showHeadTag(arg, "Effect");
       if (cmd === "model") loadModel(VRM_MODELS[arg]);
       if (cmd === "animation" && arg !== "reset") {
-        playVRMA(`${PATH.VRMA_BASE}/${arg}.vrma`);
+        playVRMA(`${PATH.VRMA_BASE}${arg}.vrma`);
       }
       else if (cmd === "animation" && arg === "reset") {
         VRM.vrma_action?.stop();

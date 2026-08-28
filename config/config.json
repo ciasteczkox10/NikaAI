@@ -7,6 +7,6 @@
     "base": {
         "vrm_base": "./assets/models/",
         "vrma_base": "./assets/vrma/",
-        "sounds_base": "./assets/sounds"
+        "sounds_base": "./assets/sounds/"
     }
 }

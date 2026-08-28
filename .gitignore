@@ -1,6 +1,7 @@
 .env
 .venv/
 *.old
+backend/context.json
 frontend/*.wav
 node_modules/
 __pycache__/

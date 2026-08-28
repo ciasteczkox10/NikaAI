@@ -52,8 +52,22 @@ export default defineConfig({
       load(id) {
         if (id === '\0virtual:vrm-models') {
           const modelsDir = path.join(assetsDir, 'models')
-          const files = fs.readdirSync(modelsDir).filter(f => f.endsWith('.vrm'))
-          return `export const VRM_FILES = ${JSON.stringify(files)}`
+          const files = fs.readdirSync(modelsDir, { withFileTypes: true })
+            .filter(d => d.isDirectory() && fs.existsSync(path.join(modelsDir, d.name, 'model.vrm')))
+            .map(d => d.name)
+
+          const metadata = Object.fromEntries(
+            files.map(name => {
+              const metaPath = path.join(modelsDir, name, 'metadata.json')
+              const meta = fs.existsSync(metaPath)
+                ? JSON.parse(fs.readFileSync(metaPath, 'utf-8'))
+                : {}
+              return [name, meta]
+            }),
+          )
+
+          return `export const VRM_FILES = ${JSON.stringify(files)}
+        export const VRM_METADATA = ${JSON.stringify(metadata)}`
         }
       },
       configureServer(server) {
