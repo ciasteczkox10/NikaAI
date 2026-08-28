@@ -27,10 +27,28 @@ NikaAI is a virtual anime character you can talk to via text or voice. She respo
 - **Response cloud** — speech bubble next to the character's head showing: greeting on load ("Hi, I'm Nika"), "Nika is thinking..." while AI processes, AI responses, and voiced reactions when touching hair/face
 - **Stack** — Python backend (WebSocket on 8766, optional FastAPI STT on 8000), Three.js + `@pixiv/three-vrm` frontend, `Pocket-tts` for TTS, `faster-whisper` for STT
 
+## Architecture
+
+```
+NikaAI/
+├── backend/
+│   ├── main.py          # WebSocket server (8766) + FastAPI STT (8000)
+│   └── context.json     # session memory (max 50 messages)
+├── assets/
+│   ├── models/<name>/model.vrm   # VRM avatars, auto-detected
+│   └── vrma/            # animations
+├── frontend/            # Three.js + @pixiv/three-vrm
+├── run.bat / run.sh
+└── .env
+```
+
+**Flow:** frontend records mic audio → sent to STT (`:8000`, faster-whisper) → text returned to input bar → sent over WebSocket (`:8766`) → backend queries the LLM → LLM returns `{response, animation, expression, model}` JSON → frontend plays TTS audio + drives lip sync/animation → response text shown in the cloud.
+
 ## Requirements
 
 - Python 3.10 (required for torch/onnxruntime compatibility)
 - Node.js / npm
+- CPU-only — no GPU required. Tested on Windows, Linux, and macOS.
 
 ## Installation
 
@@ -59,6 +77,8 @@ API_KEY=your_api_key
 BASE_URL=your_base_url
 MODEL=your_model
 ```
+
+Works with any OpenAI-compatible API, including local LLMs.
 
 ### Add models:
 
