@@ -24,6 +24,7 @@ NikaAI is a virtual anime character you can talk to via text or voice. She respo
 - **Plug-and-play models & animations** — VRM models are auto-detected from `assets/models/<name>/model.vrm` with optional `metadata.json`; VRMA animations from `assets/vrma/` at startup; no manual registration required for models to appear in the selection menu
 - **Session memory** — conversation context persists server-side in `backend/context.json` (max 50 messages)
 - **Model activation delay** — 400ms delay before showing model after load (prevents pop-in)
+- **Response cloud** — speech bubble next to the character's head showing: greeting on load ("Hi, I'm Nika"), "Nika is thinking..." while AI processes, AI responses, and voiced reactions when touching hair/face
 - **Stack** — Python backend (WebSocket on 8766, optional FastAPI STT on 8000), Three.js + `@pixiv/three-vrm` frontend, `Pocket-tts` for TTS, `faster-whisper` for STT
 
 ## Requirements
