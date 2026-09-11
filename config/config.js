@@ -1,10 +1,10 @@
 import { VRM_FILES, VRM_METADATA } from 'virtual:vrm-models';
-import config from "@config/config.json";
+import config from "@config/config.json"; // Default settings
 
 export const PATH = { // Base paths for assets
-    VRM_BASE: config.base.vrm_base,
-    VRMA_BASE: config.base.vrma_base,
-    SOUNDS_BASE: config.base.sounds_base
+    VRM_BASE: config.base.vrm,
+    VRMA_BASE: config.base.vrma,
+    SOUNDS_BASE: config.base.sounds
 };
 
 export const VRM_MODELS = Object.fromEntries( // Create an object mapping VRM model names to their file paths
@@ -13,15 +13,22 @@ export const VRM_MODELS = Object.fromEntries( // Create an object mapping VRM mo
 export { VRM_METADATA };
 
 export const DEFAULT_MODEL_SETTINGS = {
-  MODEL: VRM_MODELS[config.default.default_model], // Default VRM model to load on startup.
-  IDLE: PATH.VRMA_BASE + config.default.default_idle_animation, // Default idle animation for the VRM model.
-  THINKING: {
-    "animation": PATH.VRMA_BASE + config.default.default_thinking_animation, // Default thinking animation for the VRM model.
-    "text": "Nika is thinking..." // default message to display when the model is thinking
+  // Default settings for the VRM model.
+  MODEL: VRM_MODELS[config.model.model], // Default VRM model to load on startup.
+  IDLE: {
+    animation: PATH.VRMA_BASE + config.model.idle.animation, // Default idle animation for the VRM model.
   },
-  GREETING: "Hi, i'm Nika!", // default greeting message to display when the model is loaded
-  EXPRESSION_NAME: "neutral", // default expression to set after loading a model
-  EXPRESSION_VALUE: 0.5, // default expression value to set after loading a model
+  GREETING: {
+    text: config.model.greeting.text // default message to display when the model is loaded
+  },
+  THINKING: {
+    animation: PATH.VRMA_BASE + config.model.thinking.animation, // Default thinking animation for the VRM model.
+    text: config.model.thinking.text // default message to display when the model is thinking
+  },
+  EXPRESSION: {
+    name: config.model.expression.name, // default expression to set after loading a model
+    value: config.model.expression.value, // default expression value to set after loading a model
+  }
 };
 
 export const DEFAULT_SETTINGS = {
@@ -31,12 +38,11 @@ export const DEFAULT_SETTINGS = {
   Every option in the settings menu must be listed here,
   otherwise it will not be presented with correct default value, and might not work correctly.
   */
-  "music_id": true, // whether to enable music detection and head bobbing by default
-  "touch_id": true, // whether to enable model reactions to user touch by default
-  "tracking_id": true  // whether to enable mouse tracking by default
+  music_id: config.settings.music_id, // whether to enable music detection and head bobbing by default
+  touch_id: config.settings.touch_id, // whether to enable model reactions to user touch by default
+  tracking_id: config.settings.tracking_id  // whether to enable mouse tracking by default
 };
 
-// export const MODEL_ACTIVATION_DELAY = 400; // ms delay before enabling model visibility after load
 export const FOLLOW_SPEED = 0.08; // camera follow speed, 0.0-1.0, higher is faster
 export const SENSITIVITY = 0.2; // mouse drag sensitivity, 0.0-1.0, higher is more sensitive
 

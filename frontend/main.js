@@ -39,8 +39,6 @@ let background_color = 0x222222;
 let last_message; // store the last message displayed in the head tag
 const raycaster = new THREE.Raycaster();
 
-const inputEl = document.getElementById("user_prompt");
-
 export let ws;
 
 let colliders;
@@ -57,7 +55,7 @@ export function loadModel(model_path) {
     onModelLoaded(vrm);
     if (VRM.vrm) VRM.vrm.scene.visible = true;
     if (last_message) updateHeadTag(last_message);
-    else updateHeadTag(DM.GREETING);
+    else updateHeadTag(DM.GREETING.text);
     document.getElementById('loading_spinner').classList.remove('show');
   });
 }
@@ -85,6 +83,7 @@ class Get_Responses {
     return this;
   }
 }
+const inputEl = document.getElementById("user_prompt");
 export function ResponseHandler(data) {
   const responses = new Get_Responses;
   responses.call(data)
@@ -126,7 +125,7 @@ export function ResponseHandler(data) {
     }
     else if (animation === "reset") {
       // Reset to idle animation
-      playVRMA(DM.IDLE, true);
+      playVRMA(DM.IDLE.animation, true);
     }
   }
   if (expression && VRM.vrm?.expressionManager) {
@@ -179,6 +178,7 @@ function init() {
     ws.onopen = () => setWsStatus("connected");
     ws.onclose = () => {
       setWsStatus("not_connected");
+      VRM.playing_music = false;
       setTimeout(connectWS, 1000);
     };
     ws.onerror = () => ws.close();
@@ -227,7 +227,7 @@ function animate() {
     updateCameraFollow(dt); // update camera position and rotation based on mouse movement and model's head position
     updateHeadTagElementFollow(); // update the position of the head tag element to follow the model's head in screen space
     updateLookTracking(dt); // update eye and head tracking based on mouse position and typing state
-    updateLipSync(VRM.vrm, dt); // update lip sync based on audio input
+    updateLipSync(VRM.vrm); // update lip sync based on word input
     updateHeadBobbing(VRM, dt, 60); // update head bobbing animation based on if music is playing or not
 
     VRM.vrm.update(dt, fps);

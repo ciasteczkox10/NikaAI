@@ -1,13 +1,30 @@
 {
-    "default": {
-        "default_model": "nika",
-        "default_idle_animation": "idle.vrma",
-        "default_thinking_animation": "thinking.vrma",
+    "model": {
+        "model": "nika",
+        "idle": {
+            "animation": "idle.vrma"
+        },
+        "greeting": {
+            "text": "Hi, i'm Nika!"
+        },
+        "thinking": {
+            "animation": "thinking.vrma",
+            "text": "Nika is thinking..."
+        },
+        "expression": {
+            "name": "neutral",
+            "value": 0.5
+        },
         "ignored_animations": ["idle", "thinking"]
     },
+    "settings": {
+        "music_id": true,
+        "touch_id": true,
+        "tracking_id": true
+    },
     "base": {
-        "vrm_base": "./assets/models/",
-        "vrma_base": "./assets/vrma/",
-        "sounds_base": "./assets/sounds/"
+        "vrm": "./assets/models/",
+        "vrma": "./assets/vrma/",
+        "sounds": "./assets/sounds/"
     }
 }

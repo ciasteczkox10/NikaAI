@@ -24,8 +24,8 @@ TTS_VOICE = "./backend/voices/voice.safetensors"
 TTS_OUTPUT = "./frontend/output.wav"
 STT_LANGUAGE = "en"
 
-VRM_BASE = CONFIG["base"]["vrm_base"]
-VRMA_BASE = CONFIG["base"]["vrma_base"]
+VRM_BASE = CONFIG["base"]["vrm"]
+VRMA_BASE = CONFIG["base"]["vrma"]
 
 def get_allowed_model_list(base_path: str) -> str:
     lines = []
@@ -55,7 +55,7 @@ def get_allowed_vrma_list(base_path: str) -> list:
     for file in os.listdir(base_path):
         if file.endswith(".vrma"):
             name = file.replace(".vrma", "")
-            if not name in CONFIG["default"]["ignored_animations"]:
+            if not name in CONFIG["model"]["ignored_animations"]:
                 allowed.append({name: file})
     allowed = {key: value for item in allowed for key, value in item.items()}
     allowed = "".join(f"- {k}\n" for k in allowed)

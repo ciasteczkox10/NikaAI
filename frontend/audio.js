@@ -102,7 +102,7 @@ export async function playAudio({ type, path = null, timestamps = null, response
 }
 
 let mouthValue = 0;
-export function updateLipSync(vrm, dt) {
+export function updateLipSync(vrm) {
   if (!vrm?.expressionManager) return;
 
   const speaking = playing_voice_effect && current_voice_audio && analyser;

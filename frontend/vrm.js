@@ -3,9 +3,8 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { VRMLoaderPlugin } from "@pixiv/three-vrm";
 import { createVRMAnimationClip, VRMAnimationLoaderPlugin } from "@pixiv/three-vrm-animation";
 import { 
-    DEFAULT_MODEL_SETTINGS as DM, DEFAULT_SETTINGS as DS, // default model settings and general settings
-    FOLLOW_SPEED, // camera follow speed
-    CAMERA_SETTINGS, // camera settings for position and rotation
+    DEFAULT_MODEL_SETTINGS as DM, DEFAULT_SETTINGS as DS, // default model settings and default settings for the options in the settings menu
+    FOLLOW_SPEED, CAMERA_SETTINGS, // camera follow speed and settings for position and rotation.
     setLookAtLimits, // output scale for look-at behavior
     updateLookAt_SETTINGS, // max yaw/pitch and spring stiffness/damping for look-at behavior
 } from "@config/config.js";
@@ -77,11 +76,11 @@ export function loadVRM(path, onLoaded) {
     mixer = new THREE.AnimationMixer(VRM.vrm.scene);
     VRM.vrm.scene.rotation.y = degToRad(90);
     VRM.vrm.update(1 / 60);
-    playVRMA(DM.IDLE, false, () => {
+    playVRMA(DM.IDLE.animation, false, () => {
       onLoaded?.(VRM.vrm);
       VRM.vrm_pose_ready = true;
     }); // play idle animation
-    setExpression(VRM.vrm, DM.EXPRESSION_NAME, DM.EXPRESSION_VALUE); // set default expression
+    setExpression(VRM.vrm, DM.EXPRESSION.name, DM.EXPRESSION.value); // set default expression
     autoBlink(VRM.vrm); // start auto-blinking
     setLookAtLimits(VRM.vrm); // set look-at limits for the model's eyes
     VRM.vrm_path = path;
@@ -121,7 +120,7 @@ export function playVRMA(path, loop = false, onReady = null) {
       const onFinish = (e) => {
         if (e.action !== VRM.vrma_action) return;
         mixer.removeEventListener("finished", onFinish);
-        playVRMA(DM.IDLE, true);
+        playVRMA(DM.IDLE.animation, true);
       };
       mixer.addEventListener("finished", onFinish);
     }
@@ -216,17 +215,19 @@ export function updateLookTracking(dt) {
   _lookState.pitchVel += pitchAccel * dt;
   _lookState.yaw += _lookState.yawVel * dt;
   _lookState.pitch += _lookState.pitchVel * dt;
-
+  
   // apply to eyes and head bones
   VRM.vrm.lookAt.autoUpdate = false;
   VRM.vrm.lookAt.applier.applyYawPitch(_lookState.yaw, _lookState.pitch);
+
   const base = head.userData.baseRotation;
-  const eyes_to_head_ratio = 0.1; // reduce head rotation effect compared to eyes
-  _lookState.yaw *= eyes_to_head_ratio;
-  _lookState.pitch *= eyes_to_head_ratio;
+  const eyes_to_head_ratio = 0.1;
+  const headYaw = _lookState.yaw * eyes_to_head_ratio;
+  const headPitch = _lookState.pitch * eyes_to_head_ratio;
+
   head.rotation.order = "YXZ";
-  head.rotation.y = base.y + THREE.MathUtils.degToRad(_lookState.yaw);
-  head.rotation.x = base.x + THREE.MathUtils.degToRad(_lookState.pitch);
+  head.rotation.y = base.y + THREE.MathUtils.degToRad(headYaw);
+  head.rotation.x = base.x + THREE.MathUtils.degToRad(headPitch);
 }
 
 let frame = 0;
@@ -364,6 +365,6 @@ export async function showExpressionForDuration(vrm, name, target, duration) {
 
   await Promise.all([
       setExpression(vrm, name, 0, 400),
-      setExpression(vrm, DM.EXPRESSION_NAME, DM.EXPRESSION_VALUE, 400),
+      setExpression(vrm, DM.EXPRESSION.name, DM.EXPRESSION.value, 400),
   ]);
 }

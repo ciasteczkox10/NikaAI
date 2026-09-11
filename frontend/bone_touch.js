@@ -156,8 +156,8 @@ async function reactToTouch() {
     if (generation !== reactionGeneration) return;
     await setExpression(
       VRM.vrm,
-      DM.EXPRESSION_NAME,
-      DM.EXPRESSION_VALUE,
+      DM.EXPRESSION.name,
+      DM.EXPRESSION.value,
       250
     );
 }
