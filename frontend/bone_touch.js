@@ -5,41 +5,19 @@ import { FACE_TOUCH_BONES, REACTION_MESSAGES, DEFAULT_MODEL_SETTINGS as DM } fro
 const pointer = new THREE.Vector2();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Hair bones are auto-detected: any node whose name contains "hair"
-// (case-insensitive) is treated as a hair bone. Filled in dynamically the
-// first time createBoneColliders runs. Matching is by name only (not
-// obj.isBone) because some VRM secondary-chain nodes import as plain
-// Object3D rather than THREE.Bone, and requiring isBone silently skipped
-// them, leaving half the strands without colliders.
+/* 
+Hair bones are auto-detected: any node whose name contains "hair"
+(case-insensitive) is treated as a hair bone. Filled in dynamically the
+first time createBoneColliders runs. Matching is by name only (not
+obj.isBone) because some VRM secondary-chain nodes import as plain
+Object3D rather than THREE.Bone, and requiring isBone silently skipped
+them, leaving half the strands without colliders.
+*/ 
 export let HAIR_TOUCH_BONES = [];
 const HAIR_NAME_RE = /^J_Sec_Hair\d+_\d+(_end)?$/i;
 
 const TOUCH_BONE_NAMES = new Set(); // hair + face, rebuilt per model load
 
-// Diagnostic: call this once after model load (e.g. in the console) to see
-// what got auto-detected as hair vs what didn't.
-export function debugTouchBoneCoverage(vrm) {
-  const allNames = [];
-  vrm.scene.traverse((obj) => allNames.push(obj.name));
-
-  console.log('[touch] Auto-detected hair bones:', HAIR_TOUCH_BONES);
-  console.log('[touch] All node names on model that look hair-related (sanity check):',
-    allNames.filter((n) => HAIR_NAME_RE.test(n)));
-}
-
-// One capsule per touch bone, sized to the actual segment between the bone
-// and its first touch-relevant child (so a long strand gets a long thin
-// capsule, not a fixed blob). Leaf bones (no usable child) reuse the
-// incoming direction/length from their parent instead of defaulting to a
-// tiny unrotated blob.
-//
-// Also adds cheap primitive "blocker" colliders on head/chest/hips. These
-// exist purely so a ray through the torso/head can be recognized as
-// occluded WITHOUT ever raycasting the real skinned mesh geometry — that
-// real-geometry raycast is what caused the lag spike. Blockers are normal
-// raycast candidates (closer hair capsules still win when actually in
-// front), but userData.isBlocker marks them so they never trigger a
-// reaction themselves.
 let activeColliders = [];
 export function createBoneColliders(vrm, {
   radius = 0.018,
@@ -166,7 +144,6 @@ async function reactToTouch() {
 
     showHeadTag(
         reaction_message.key,
-        "Effect",
         reaction_message.value
     );
 
@@ -179,17 +156,19 @@ async function reactToTouch() {
     if (generation !== reactionGeneration) return;
     await setExpression(
       VRM.vrm,
-      DM.DEFAULT_EXPRESSION_NAME,
-      DM.DEFAULT_EXPRESSION_VALUE,
+      DM.EXPRESSION_NAME,
+      DM.EXPRESSION_VALUE,
       250
     );
 }
 
-// Only ever raycasts the lightweight primitive colliders array (hair
-// capsules + head/chest/hips blockers) — never real skinned mesh geometry.
-// That's what keeps this fast; a torso/face click hits its blocker sphere
-// first (closest along the ray) and is ignored, with no lag, instead of
-// falling through to whatever hair capsule sits behind it.
+/*
+Only ever raycasts the lightweight primitive colliders array (hair
+capsules + head/chest/hips blockers) — never real skinned mesh geometry.
+That's what keeps this fast; a torso/face click hits its blocker sphere
+first (closest along the ray) and is ignored, with no lag, instead of
+falling through to whatever hair capsule sits behind it.
+*/
 export function onBoneTouch_old(camera, colliders, domElement, raycaster, event) {
   const rect = domElement.getBoundingClientRect();
   const x = event.touches ? event.touches[0].clientX : event.clientX;

@@ -2,7 +2,8 @@
     "default": {
         "default_model": "nika",
         "default_idle_animation": "idle.vrma",
-        "default_thinking_animation": "thinking.vrma"
+        "default_thinking_animation": "thinking.vrma",
+        "ignored_animations": ["idle", "thinking"]
     },
     "base": {
         "vrm_base": "./assets/models/",

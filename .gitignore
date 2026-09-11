@@ -6,3 +6,4 @@ frontend/*.wav
 node_modules/
 __pycache__/
 AGENTS.md
+.unused

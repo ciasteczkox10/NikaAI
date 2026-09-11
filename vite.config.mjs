@@ -23,7 +23,12 @@ export default defineConfig({
       configureServer(server) {
         server.middlewares.use(
           '/assets',
-          sirv(assetsDir)
+          sirv(assetsDir, {
+            dev: true,
+            etag: false,
+            maxAge: 0,
+            single: false
+          })
         )
 
         server.watcher.add(assetsDir)
@@ -90,7 +95,6 @@ export default defineConfig({
     },
     watch: {
       ignored: ['**/.venv/**'],
-      usePolling: true,
     }
   }
 })

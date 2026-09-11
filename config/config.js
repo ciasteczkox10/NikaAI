@@ -7,17 +7,21 @@ export const PATH = { // Base paths for assets
     SOUNDS_BASE: config.base.sounds_base
 };
 
-export const VRM_MODELS = Object.fromEntries(
+export const VRM_MODELS = Object.fromEntries( // Create an object mapping VRM model names to their file paths
   VRM_FILES.map(name => [name, `${PATH.VRM_BASE}${name}/model.vrm`]),
 )
 export { VRM_METADATA };
 
 export const DEFAULT_MODEL_SETTINGS = {
-  VRM_DEFAULT_MODEL: VRM_MODELS[config.default.default_model], // Default VRM model to load on startup.
-  VRMA_IDLE: PATH.VRMA_BASE + config.default.default_idle_animation, // Default idle animation for the VRM model.
-  VRMA_THINKING: PATH.VRMA_BASE + config.default.default_thinking_animation, // Default thinking animation for the VRM model.
-  DEFAULT_EXPRESSION_NAME: "neutral", // default expression to set after loading a model
-  DEFAULT_EXPRESSION_VALUE: 0.5, // default expression value to set after loading a model
+  MODEL: VRM_MODELS[config.default.default_model], // Default VRM model to load on startup.
+  IDLE: PATH.VRMA_BASE + config.default.default_idle_animation, // Default idle animation for the VRM model.
+  THINKING: {
+    "animation": PATH.VRMA_BASE + config.default.default_thinking_animation, // Default thinking animation for the VRM model.
+    "text": "Nika is thinking..." // default message to display when the model is thinking
+  },
+  GREETING: "Hi, i'm Nika!", // default greeting message to display when the model is loaded
+  EXPRESSION_NAME: "neutral", // default expression to set after loading a model
+  EXPRESSION_VALUE: 0.5, // default expression value to set after loading a model
 };
 
 export const DEFAULT_SETTINGS = {
@@ -27,15 +31,17 @@ export const DEFAULT_SETTINGS = {
   Every option in the settings menu must be listed here,
   otherwise it will not be presented with correct default value, and might not work correctly.
   */
+  "music_id": true, // whether to enable music detection and head bobbing by default
   "touch_id": true, // whether to enable model reactions to user touch by default
   "tracking_id": true  // whether to enable mouse tracking by default
 };
 
-export const MODEL_ACTIVATION_DELAY = 400; // ms delay before enabling model visibility after load
+// export const MODEL_ACTIVATION_DELAY = 400; // ms delay before enabling model visibility after load
 export const FOLLOW_SPEED = 0.08; // camera follow speed, 0.0-1.0, higher is faster
 export const SENSITIVITY = 0.2; // mouse drag sensitivity, 0.0-1.0, higher is more sensitive
 
 export const CAMERA_SETTINGS = {
+  // Default camera settings for zoom and rotation
   zoom: 1.5,
   rot_x: 0,
   rot_y: 0
@@ -88,7 +94,8 @@ export const REACTION_MESSAGES = {
   "Don't touch my head!": `${PATH.SOUNDS_BASE}dont_touch_my_head.wav`
 };
 
-export const HAIR_TOUCH_BONES =[ // List of bone names in the VRM model that correspond to hair sections. Used to detect when the user touches the model's hair.
+export const HAIR_TOUCH_BONES =[
+  // List of bone names in the VRM model that correspond to hair sections. Used to detect when the user touches the model's hair.
 "J_Sec_Hair1_01",
 "J_Sec_Hair2_01",
 "J_Sec_Hair3_01",
@@ -190,7 +197,8 @@ export const HAIR_TOUCH_BONES =[ // List of bone names in the VRM model that cor
 "J_Sec_Hair4_18"
 ];
 
-export const FACE_TOUCH_BONES = [ // List of bone names in the VRM model that correspond to the face. Used to detect when the user touches the model's face.
+export const FACE_TOUCH_BONES = [
+  // List of bone names in the VRM model that correspond to the face. Used to detect when the user touches the model's face.
 "J_Bip_C_Neck",
 "J_Bip_C_Head",
 "J_Adj_L_FaceEye",

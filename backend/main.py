@@ -1,8 +1,10 @@
-import os
+import os, time
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+START = time.perf_counter()
 print("Loading config...")
 import asyncio, websockets, sys, json
 from .ai import chat
+from .music import detect_music, playing
 from config import SYSTEM_PROMPT
 use_tts, use_stt = True, True
 
@@ -30,54 +32,78 @@ async def broadcast(msg: str):
     for ws in connected_vrm:
         await ws.send(msg)
 
-async def process_input(current_model_info: dict, current_expression: dict, user_input: str):
+async def process_input(data):
     user_prompt = {
-        "current_model": current_model_info,
-        "current_expression": current_expression,
-        "user_prompt": user_input
+        "current_model": data.model,
+        "current_expression": data.expression,
+        "playing_music": data.music,
+        "user_prompt": data.message
     }
     print(f"user_prompt:\n{user_prompt}")
+    
     response = await asyncio.get_event_loop().run_in_executor(None, chat, json.dumps(user_prompt))
+    word_actions = response.get("response", [])
+    clean_text = " ".join(word for word, action in word_actions)
 
+    if use_tts:
+        timestamps = generate_tts(clean_text)
+
+    audio_type = "tts_audio" if use_tts else "no_tts_audio"
+    response["audio"] = {
+        "type": audio_type,
+        "timestamps": [
+            {
+                "word": w.word,
+                "start_time": w.start_time,
+                "end_time": w.end_time,
+                "action": word_actions[i][1] if i < len(word_actions) else None,
+            }
+            for i, w in enumerate(timestamps)
+        ],
+    }
+    response["response"] = clean_text
     print(f"llm_response:\n{response}")
 
-    llm_response = response.get("response", "")
 
-    expression = response.get("expression") or {}
-    name = expression.get("expression_name", "")
-    value = expression.get("expression_value", 0)
-    duration = expression.get("expression_duration", 0)
+    await broadcast(json.dumps(response))
 
-    animation = response.get("animation")
-    model = response.get("model")
-    
-    if use_tts:
-        generate_tts(llm_response)
-
-    await broadcast(f"llm_response:{llm_response}")
-
-    audio_type  = "tts_audio:" if use_tts else "no_tts_audio:"
-    await broadcast(f"{audio_type}{llm_response}")
-    if expression: await broadcast(f"expression:{name}:{value}:{duration}")
-    if animation: await broadcast(f"animation:{animation}")
-    if model: await broadcast(f"model:{model}")
+ATTRIBUTES = [
+    "model",
+    "expression",
+    "music",
+    "message"
+]
+class AI_Inputs:
+    def __init__(self):
+        for attribute in ATTRIBUTES:
+            setattr(self, attribute, None)
+    def __call__(self, data):
+        for k, v in data.items():
+            if k in ATTRIBUTES:
+                try: v = json.loads(v)
+                except json.JSONDecodeError: pass
+                setattr(self, k, v)
+        return self
 
 async def handler_ws(ws):
     print("WebSocket connected")
     connected_vrm.add(ws)
+    await broadcast(json.dumps(playing))
     try:
         async for msg in ws:
             if isinstance(msg, bytes):
                 result = transcribe(msg)
                 await broadcast(f"stt_result:{result['text']}")
                 continue
-            if msg.startswith("current_model:"):
-                current_model_info = json.loads(msg.replace("current_model:", ""))
-            if msg.startswith("current_expression:"):
-                current_expression = json.loads(msg.replace("current_expression:", ""))
-            if msg.startswith("user_prompt:"):
-                user_input = msg.replace("user_prompt:", "")
-                await process_input(current_model_info, current_expression, user_input)
+            try:
+                data = json.loads(msg)
+            except json.JSONDecodeError:
+                print("Error parsing JSON:")
+                await broadcast(json.dumps({"error": "Invalid JSON"}))
+            
+
+            class_data = AI_Inputs()
+            await process_input(class_data(data))
 
     except Exception as e:
         print("WebSocket disconnected:", e)
@@ -86,14 +112,26 @@ async def handler_ws(ws):
         connected_vrm.discard(ws)
 
 async def main():
-    async with websockets.serve(handler_ws,  "0.0.0.0", 8766):
-        await asyncio.Future()
+    music = asyncio.create_task(detect_music(broadcast))
+    try:
+        async with websockets.serve(handler_ws, "0.0.0.0", 8766):
+            await asyncio.Future()
+    except asyncio.CancelledError:
+        pass
+    finally:
+        music.cancel()
+        try:
+            await music
+        except asyncio.CancelledError:
+            pass
 
 if __name__ == "__main__":
+    print("TTS Enabled" if use_tts else "TTS Disabled")
+    print("STT Enabled" if use_stt else "STT Disabled")
+    #print(SYSTEM_PROMPT)
+    print(f"Startup time: {time.perf_counter() - START:.2f}s")
     try:
-        print("TTS Enabled" if use_tts else "TTS Disabled")
-        print("STT Enabled" if use_stt else "STT Disabled")
-        #print(SYSTEM_PROMPT)
         asyncio.run(main())
-    except Exception as e:
-        print(e); input()
+    except KeyboardInterrupt:
+        print("Saving context and Quitting...")
+        chat("", save=True)

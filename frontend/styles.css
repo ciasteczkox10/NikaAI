@@ -179,6 +179,23 @@ input[type="range"] {
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     display: none;
 }
+#music-tag {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  padding: 6px 12px;
+  background: rgba(30, 30, 30, 0.75);
+  backdrop-filter: blur(4px);
+  border-radius: 14px;
+  color: #eee;
+  font-size: 15px;
+  font-family: sans-serif;
+  letter-spacing: 2px;
+  display: none;
+  align-items: center;
+  pointer-events: none;
+}
+#music-tag.show { display: flex; }
 
 .loading-spinner {
     display: none;

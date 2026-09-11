@@ -15,9 +15,24 @@ function getaudio_ctx() {
 let playing_voice_effect;
 let current_voice_audio;
 let current_voice_playback_id = 0;
-export async function playAudio(type, path = null, wordsDict = null, words = null, ACTIONS = null) {
-  const src = type === "TTS" ? `${path ?? "./output.wav"}?t=${Date.now()}` : path;
+let displayedText = "";
+
+const VISEMES = ["aa", "ih", "ou", "ee", "oh"];
+const VOWEL_TO_VISEME = { a: "aa", e: "ee", i: "ih", o: "oh", u: "ou" };
+let currentViseme = "aa";
+
+function pickViseme(word) {
+  const vowels = (word || "").toLowerCase().match(/[aeiou]/g);
+  if (!vowels) return "aa";
+  return VOWEL_TO_VISEME[vowels[0]] || "aa";
+}
+
+export async function playAudio({ type, path = null, timestamps = null, response = null, updateHeadTag, ResponseHandler }) {
+  const src = type === "tts_audio" ? `./output.wav?t=${Date.now()}`
+            : type === "no_tts_audio" ? path
+            : null;
   if (!src) return;
+  displayedText = "";
 
   if (current_voice_audio) {
     current_voice_audio.pause();
@@ -36,20 +51,48 @@ export async function playAudio(type, path = null, wordsDict = null, words = nul
   current_voice_audio = audio;
   playing_voice_effect = true;
 
-  let stopSync = null;
+  let syncInterval = null;
+  let lastWord = null;
+
+  if (timestamps && response) {
+    const responseWords = response.split(" ");
+    timestamps.forEach((ts, i) => {
+      ts.word = responseWords[i] ?? ts.word;
+    });
+  }
 
   try {
     await audio.play();
-    if (wordsDict && words && ACTIONS) {
-      stopSync = syncActions(audio, wordsDict, words, ACTIONS);
+
+    if (timestamps && timestamps.length) {
+      syncInterval = setInterval(() => {
+        const t = audio.currentTime;
+        const current = timestamps.find(w => t >= w.start_time && t < w.end_time);
+        if (current && current.word !== lastWord) {
+          displayedText += (displayedText ? " " : "") + current.word;
+          updateHeadTag(displayedText)
+          lastWord = current.word;
+          currentViseme = pickViseme(current.word);
+
+          if (current.action) {
+            ResponseHandler(current.action);
+          }
+        }
+      }, 50);
+    } else if (type === "no_tts_audio") {
+      // No word timing available, cycle viseme randomly while it plays
+      syncInterval = setInterval(() => {
+        currentViseme = VISEMES[Math.floor(Math.random() * VISEMES.length)];
+      }, 100);
     }
+
     await new Promise((resolve) =>
       audio.addEventListener("ended", resolve, { once: true })
     );
   } catch (error) {
     console.log("Audio playback error:", error);
   } finally {
-    if (stopSync) stopSync();
+    if (syncInterval) clearInterval(syncInterval);
     if (playbackId === current_voice_playback_id) {
       current_voice_audio = null;
       playing_voice_effect = false;
@@ -58,9 +101,6 @@ export async function playAudio(type, path = null, wordsDict = null, words = nul
   }
 }
 
-const VISEMES = ["aa", "ih", "ou", "ee", "oh"];
-let currentViseme = "aa";
-let visemeSwapTimer = 0;
 let mouthValue = 0;
 export function updateLipSync(vrm, dt) {
   if (!vrm?.expressionManager) return;
@@ -72,16 +112,9 @@ export function updateLipSync(vrm, dt) {
     const avg = freq_data.reduce((a, b) => a + b, 0) / freq_data.length;
     const target = Math.min(1, avg / 80);
     mouthValue += (target - mouthValue) * 0.4;
-
-    visemeSwapTimer -= dt;
-    if (visemeSwapTimer <= 0) {
-      VISEMES.forEach(v => vrm.expressionManager.setValue(v, 0));
-      currentViseme = VISEMES[Math.floor(Math.random() * VISEMES.length)];
-      visemeSwapTimer = 0.08 + Math.random() * 0.08;
-    }
   } else {
     mouthValue += (0 - mouthValue) * 0.4;
   }
 
-  vrm.expressionManager.setValue(currentViseme, mouthValue);
+  VISEMES.forEach(v => vrm.expressionManager.setValue(v, v === currentViseme ? mouthValue : 0));
 }

@@ -2,7 +2,7 @@ import { VRM_MODELS, VRM_METADATA } from "@config/config.js";
 
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export function buildModelButtons(VRM_MODELS, loadVRM, default_settings) {
+export function buildModelButtons(VRM_MODELS, loadModel, default_settings) {
     Object.entries(default_settings).forEach(([key, value]) => {
         const el = document.getElementById(key);
         if (el) el.textContent = (value === true ? "ON" : value === false ? "OFF" : value);
@@ -21,7 +21,7 @@ export function buildModelButtons(VRM_MODELS, loadVRM, default_settings) {
         const button = document.createElement("button");
         button.id = buttonId;
         button.textContent = modelName;
-        button.addEventListener("click", () => loadVRM(modelPath));
+        button.addEventListener("click", () => loadModel(modelPath));
 
         item.appendChild(button);
 
@@ -32,21 +32,22 @@ export function buildModelButtons(VRM_MODELS, loadVRM, default_settings) {
         list.insertBefore(fragment, list.firstElementChild);
     }
 }
-export function sendPrompt(ws, model_path, current_expression) {
+export function sendPrompt(ws, model_path, expression, playing_music) {
     // Send the user's prompt to the server via WebSocket, if the WebSocket is open and the input field has a value
     const input = document.getElementById("user_prompt");
-    if (!input.value || !ws || ws.readyState !== WebSocket.OPEN) {
-        return;
+    if (!input.value || !ws || ws.readyState !== WebSocket.OPEN) return;
+    const model_name = Object.keys(VRM_MODELS).find(k => VRM_MODELS[k] === model_path);
+    const model_info = {
+        "name": VRM_METADATA[model_name].name || ""
     }
-    let current_model_name = Object.keys(VRM_MODELS).find(k => VRM_MODELS[k] === model_path);
-    let current_model_info = {
-        "name": VRM_METADATA[current_model_name].name || "",
-        "description": VRM_METADATA[current_model_name].description || ""
+    const data = {
+        "model": JSON.stringify(model_info),
+        "expression": expression,
+        "music": JSON.stringify(playing_music),
+        "message": input.value
     }
-    ws.send("current_model:" + JSON.stringify(current_model_info));
-    ws.send("current_expression:" + current_expression);
-    ws.send("user_prompt:" + input.value);
-    window.dispatchEvent(new Event("thinking"));
+    window.dispatchEvent(new Event("thinking_start"));
+    ws.send(JSON.stringify(data))
     console.log("User:", input.value);
     input.value = "";
 }
