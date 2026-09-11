@@ -10,45 +10,53 @@ NikaAI is a virtual anime character you can talk to via text or voice. She respo
 ## Features
 
 - **Text & voice input** — chat via a text box, or hold the mic button to speak
-- **Speech-to-text** — hold-to-record; audio transcribed server-side with `faster-whisper` (Whisper base model), text sent back to the frontend input bar
+- **Speech-to-text** — hold-to-record; audio is transcribed server-side with `faster-whisper` (Whisper base model) and sent back to the frontend input bar
 - **Text-to-speech** — spoken responses with mouth sync (viseme-based lip sync); custom voice (`voice.safetensors`); disable with `--no-tts` for voice effects only
 - **Tsundere personality** — short, dismissive, sarcastic replies defined via system prompt, fully customizable
-- **JSON-driven animations & expressions** — the AI responds with structured JSON (`{"response", "animation", "expression", "model"}`) that drives character animations and facial expressions directly.
+- **Word-triggered animations & expressions** — the AI returns a per-word JSON structure (`{"response": [["word", {expression, animation, model}]]}`) so the character animates / changes expression exactly when a given word is spoken
 - **AI-driven VRM model switching** — the AI can request a VRM avatar switch via the `model` field in its JSON response, in addition to manual switching
-- **Cursor-tracking eyes and head** — gaze follows the mouse in real time with spring physics; head naturally follows eye movement; eyes look at input bar when typing
+- **Music-reactive head bobbing** — when the OS reports music playing, Nika bobs her head to the beat
+- **Cursor-tracking eyes and head** — gaze follows the mouse in real time with spring physics; head naturally follows eye movement; eyes look at the input bar when typing
 - **Head-locked camera** — camera aims at the head bone so it stays centered as the character moves; right-drag to orbit, scroll to zoom in/out
-- **Settings panel** — toggle in the bottom-left corner for manual model switching, mouse-tracking on/off, reaction to touch on/off, and VRM reload
+- **Settings panel** — toggle in the bottom-left corner for manual model switching, mouse-tracking on/off, reaction to touch on/off, music bobbing, and VRM reload
 - **Touch reactions** — click/tap the model's hair or face to trigger random voiced reactions with audio and angry expression
 - **Auto-blinking** — natural random blink intervals
 - **Thinking & idle animations** — plays `thinking.vrma` while AI processes; loops `idle.vrma` by default
 - **Plug-and-play models & animations** — VRM models are auto-detected from `assets/models/<name>/model.vrm` with optional `metadata.json`; VRMA animations from `assets/vrma/` at startup; no manual registration required for models to appear in the selection menu
 - **Session memory** — conversation context persists server-side in `backend/context.json` (max 50 messages)
-- **Model activation delay** — 400ms delay before showing model after load (prevents pop-in)
 - **Response cloud** — speech bubble next to the character's head showing: greeting on load ("Hi, I'm Nika"), "Nika is thinking..." while AI processes, AI responses, and voiced reactions when touching hair/face
-- **Stack** — Python backend (WebSocket on 8766, optional FastAPI STT on 8000), Three.js + `@pixiv/three-vrm` frontend, `Pocket-tts` for TTS, `faster-whisper` for STT
+- **Stack** — Python backend (WebSocket on `:8766`; TTS and STT run **in-process**, not as separate servers), Three.js + `@pixiv/three-vrm` frontend, `Pocket-tts` for TTS, `faster-whisper` for STT
 
 ## Architecture
 
 ```
 NikaAI/
 ├── backend/
-│   ├── main.py          # WebSocket server (8766) + FastAPI STT (8000)
-│   └── context.json     # session memory (max 50 messages)
+│   ├── main.py          # WebSocket server (8766), orchestration, flags
+│   ├── ai.py            # LLM client (OpenAI-compatible)
+│   ├── tts.py           # Text-to-speech (pocket_tts_timestamped), in-process
+│   ├── stt.py           # Speech-to-text (faster-whisper), in-process
+│   ├── music.py         # Music detection
+│   ├── context.py       # Session memory (max 50 messages)
+│   └── context.json     # persisted session memory
 ├── assets/
 │   ├── models/<name>/model.vrm   # VRM avatars, auto-detected
-│   └── vrma/            # animations
+│   ├── vrma/            # animations
+│   └── sounds/          # pre-generated touch-reaction audio
 ├── frontend/            # Three.js + @pixiv/three-vrm
 ├── run.bat / run.sh
 └── .env
 ```
 
-**Flow:** frontend records mic audio → sent to STT (`:8000`, faster-whisper) → text returned to input bar → sent over WebSocket (`:8766`) → backend queries the LLM → LLM returns `{response, animation, expression, model}` JSON → frontend plays TTS audio + drives lip sync/animation → response text shown in the cloud.
+**Flow:** frontend records mic audio → binary bytes sent over the WebSocket (`:8766`) → transcribed in-process by `faster-whisper` → text returned to the input bar → user sends text over the WebSocket → backend queries the LLM → LLM returns `{"response": [["word", {expression, animation, model}], ...]}` JSON → backend TTS-synthesizes the reply and broadcasts the response with per-word timestamps → frontend plays audio + drives lip sync/animation → response text shown in the cloud.
+
+**Communication:** a single WebSocket at `:8766` carries JSON text messages, binary audio (STT), and prefixed strings. There is no `cmd:arg` protocol and no Flask server. TTS and STT run inside the backend process (the FastAPI STT app in `stt.py` is only used if you run that file directly; the main flow imports `transcribe` in-process).
 
 ## Requirements
 
 - Python 3.10 (required for torch/onnxruntime compatibility)
 - Node.js / npm
-- CPU-only — no GPU required. Tested on Windows, Linux, and macOS.
+- CPU-only — no GPU required
 
 ## Installation
 
@@ -97,7 +105,7 @@ run.bat     # Windows
 ./run.sh    # Linux/macOS
 ```
 
-**Or launch manually**
+**Or launch manually** — the backend MUST be invoked as a module (it uses relative imports, so running `backend/main.py` as a plain script will fail):
 
 #### Windows
 

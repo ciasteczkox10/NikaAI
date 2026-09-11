@@ -6,3 +6,6 @@ python-dotenv
 scipy
 uvicorn
 websockets
+winsdk; sys_platform == "win32"
+jeepney; sys_platform == "linux"
+pyobjc-framework-Cocoa; sys_platform == "darwin"
