@@ -25,7 +25,7 @@
                 "name": null,
                 "value": null
             },
-            "audio": "hey.wav"
+            "audio": null
         },
         "ignored_animations": ["idle", "thinking"]
     },
