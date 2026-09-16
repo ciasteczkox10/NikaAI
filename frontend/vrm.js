@@ -7,6 +7,7 @@ import {
     FOLLOW_SPEED, CAMERA_SETTINGS, // camera follow speed and settings for position and rotation.
     setLookAtLimits, // output scale for look-at behavior
     updateLookAt_SETTINGS, // max yaw/pitch and spring stiffness/damping for look-at behavior
+    CUSTOM_EXPRESSIONS,
 } from "@config/config.js";
 import { ResponseHandler } from "./main.js"
 import { EVENTS } from "./events.js";
@@ -25,6 +26,7 @@ export let VRM = {
     vrm_pose_ready: null,
     vrm_path: null,
     cached_meshes: [],
+    first_load: true,
     playing_music: false,
     head_bob_degrees: 10
 }
@@ -76,24 +78,61 @@ export function loadVRM(path, onLoaded) {
     mixer = new THREE.AnimationMixer(VRM.vrm.scene);
     VRM.vrm.scene.rotation.y = degToRad(90);
     VRM.vrm.update(1 / 60);
-    playVRMA(DM.IDLE.animation, false, () => {
-      onLoaded?.(VRM.vrm);
-      VRM.vrm_pose_ready = true;
-    }); // play idle animation
-    setExpression(VRM.vrm, DM.EXPRESSION.name, DM.EXPRESSION.value); // set default expression
+    greeting(VRM.vrm, onLoaded); // show greeting animation and expression
+    setExpression(VRM.vrm, DM.IDLE.expression.name, DM.IDLE.expression.value); // set default expression
     autoBlink(VRM.vrm); // start auto-blinking
     setLookAtLimits(VRM.vrm); // set look-at limits for the model's eyes
     VRM.vrm_path = path;
     VRM.vrm_loaded = true;
   }, undefined, (error) => {
-    console.error("Failed to load VRM:", error);  });
+    console.error("Failed to load VRM:", error);
+  });
 }
 
-export function playVRMA(path, loop = false, onReady = null) {
-  /*
-  Play a VRMA animation on the currently loaded VRM model, optionally looping it.
-  If another animation is already playing, crossfade to the new animation.
-  */
+function greeting(vrm, onLoaded) {
+  if (!vrm) return;
+  const animation = DM.GREETING.animation ?? null;
+  const text = DM.GREETING.text ?? null;
+  const expression = DM.GREETING.expression ?? null;
+  const audio = DM.GREETING.audio ?? null;
+  if (animation && VRM.first_load) {
+    // play greeting animation
+    playVRMA(DM.GREETING.animation, false, () => {
+      onLoaded?.(VRM.vrm);
+      if (expression) {
+        // show greeting expression
+        setExpression(vrm, expression?.name, expression?.value);
+        EVENTS.ignore_blinking = true;
+        EVENTS.ignore_head_bobbing = true;
+        EVENTS.ignore_tracking = true;
+        EVENTS.ignore_touch = true;
+      }
+      // updateHeadTag(text); // show greeting text in head tag
+      showHeadTag(text, audio); // show greeting text in head tag and optionally play audio
+    }, () => {
+      // reset expression and set pose ready
+      setExpression(vrm, expression?.name, 0);
+      updateHeadTag(DM.IDLE.text ?? null);
+      EVENTS.ignore_blinking = false;
+      EVENTS.ignore_head_bobbing = false;
+      EVENTS.ignore_tracking = false;
+      EVENTS.ignore_touch = false;
+      VRM.first_load = false;
+      VRM.vrm_pose_ready = true;
+    });
+  } else {
+    // play idle animation
+    playVRMA(DM.IDLE.animation, true, () => {
+      onLoaded?.(VRM.vrm);
+      updateHeadTag(DM.IDLE.text ?? null);
+      VRM.first_load = false;
+      VRM.vrm_pose_ready = true;
+    });
+  }
+}
+
+export function playVRMA(path, loop = false, onReady = null, onFinish = null) {
+  // Play a VRMA animation on the current VRM model, optionally looping it and calling callbacks when ready and finished.
   if (!VRM.vrm || !mixer) return;
   const loader = new GLTFLoader();
   loader.register((p) => new VRMLoaderPlugin(p));
@@ -113,29 +152,31 @@ export function playVRMA(path, loop = false, onReady = null) {
     if (VRM.vrma_action) action.crossFadeFrom(VRM.vrma_action, 0.5, true);
     action.play();
     VRM.vrma_action = action;
-    mixer.update(0); // force update to apply the new action immediately
+    mixer.update(0);
     onReady?.();
 
     if (!loop) {
-      const onFinish = (e) => {
+      const onFinishInternal = (e) => {
         if (e.action !== VRM.vrma_action) return;
-        mixer.removeEventListener("finished", onFinish);
+        mixer.removeEventListener("finished", onFinishInternal);
+        onFinish?.();
         playVRMA(DM.IDLE.animation, true);
       };
-      mixer.addEventListener("finished", onFinish);
+      mixer.addEventListener("finished", onFinishInternal);
     }
   }, undefined, (error) => {
     console.error("Failed to load VRMA:", path, error);
   });
 }
+const tag_offset = new THREE.Vector3(0.05, 0.0, 0.08);
 export function updateHeadTagElementFollow() {
   const head = bone("head");
   if (!head) return;
   if (head_tag_el?.style.display !== "none") {
-    // Update the position of the head tag element to follow the model's head in screen space
-    const p = head_pos.clone().project(camera);
-    head_tag_el.style.left = `${(p.x * 0.5 + 0.5) * window.innerWidth + 60}px`;
-    head_tag_el.style.top = `${(-p.y * 0.5 + 0.5) * window.innerHeight - 40}px`;
+    const world_offset = tag_offset.clone().applyQuaternion(head.getWorldQuaternion(new THREE.Quaternion()));
+    const p = head_pos.clone().add(world_offset).project(camera);
+    head_tag_el.style.left = `${(p.x * 0.5 + 0.5) * window.innerWidth}px`;
+    head_tag_el.style.top = `${(-p.y * 0.5 + 0.5) * window.innerHeight}px`;
   }
 }
 const head_pos = new THREE.Vector3();
@@ -176,17 +217,25 @@ export function updateLookTracking(dt) {
       head.userData.baseRotation = head.rotation.clone();
   }
   dt = Math.min(dt, 1 / 30); // clamped to avoid spring blowup after tab switch/alt-tab
-
   let targetYaw = 0;
   let targetPitch = 0;
   if (EVENTS.ignore_mouse) {
+    // if the model is thinking, look at the thinking target
     targetYaw = _thinkingYaw;
     targetPitch = _thinkingPitch;
-  } else if (!DS.tracking_id || !EVENTS.mouse_tracking) {
-    // if mouse tracking option or mouse tracking is disabled, reset to neutral
-    targetYaw = 0;
-    targetPitch = 0;
-  } else if (EVENTS.is_typing_in_input) {
+  } else if (!DS.tracking_id || EVENTS.ignore_tracking || !EVENTS.mouse_tracking || EVENTS.dragging) {
+    // if mouse tracking is disabled, look at the camera
+    const headWorldPos = new THREE.Vector3();
+    const headWorldQuat = new THREE.Quaternion();
+    head.getWorldPosition(headWorldPos);
+    head.getWorldQuaternion(headWorldQuat);
+
+    const dir = camera.position.clone().sub(headWorldPos).normalize();
+    const localDir = dir.applyQuaternion(headWorldQuat.clone().invert());
+
+    targetYaw = Math.atan2(localDir.x, localDir.z) * (180 / Math.PI);
+    targetPitch = Math.asin(-localDir.y) * (180 / Math.PI);
+} else if (EVENTS.is_typing_in_input) {
     // if typing in input, look on input bar
     const inputEl = document.getElementById("user_prompt");
     const INPUT_RECT = inputEl.getBoundingClientRect();
@@ -197,7 +246,7 @@ export function updateLookTracking(dt) {
     const ndcY = -(centerY / window.innerHeight) * 2 + 1;
     targetYaw = ndcX * updateLookAt_SETTINGS.MAX_YAW;
     targetPitch = -ndcY * updateLookAt_SETTINGS.MAX_PITCH;
-  } else if (DS.tracking_id && EVENTS.mouse_tracking && !EVENTS.ignore_mouse && EVENTS.mouse_x !== undefined) {
+  } else if (DS.tracking_id && !EVENTS.ignore_tracking && EVENTS.mouse_tracking && !EVENTS.ignore_mouse && EVENTS.mouse_x !== undefined) {
     // if mouse tracking option and mouse tracking is enabled, calculate target yaw/pitch based on mouse position
     const ndcX = (EVENTS.mouse_x / window.innerWidth) * 2 - 1;
     const ndcY = -(EVENTS.mouse_y / window.innerHeight) * 2 + 1;
@@ -245,6 +294,7 @@ const music_el = document.getElementById("music-tag");
 const squint_eyes = false;
 
 export function updateHeadBobbing(VRM, dt, total_frames = null) {
+  if (EVENTS.ignore_head_bobbing) return;
   if (!VRM.vrm?.lookAt) return;
   const head = bone("head");
   if (!head) return;
@@ -294,17 +344,17 @@ export function updateHeadBobbing(VRM, dt, total_frames = null) {
 // Additional functions
 let valid_audio_types = ["tts_audio", "no_tts_audio"]
 export let head_tag_el = document.getElementById("head-tag");
-export function showHeadTag(text, audio_type = null, timestamps = null) {
+export function showHeadTag(text, audio_type, timestamps = null, ignore_hide = false) {
   // Display a message in the head tag element and optionally play an audio.
   if (!head_tag_el) return;
-  if (audio_type === null) return;
+  VRM.head_bob_degrees = 5;
   if (valid_audio_types.includes(audio_type)) {
-    VRM.head_bob_degrees = 5;
     playAudio({
       type: audio_type,
       path: null,
       timestamps,
       response: text,
+      ignore_hide: ignore_hide,
       updateHeadTag,
       ResponseHandler
     }).then(() => {
@@ -314,8 +364,13 @@ export function showHeadTag(text, audio_type = null, timestamps = null) {
     updateHeadTag(text);
     playAudio({
       type: "no_tts_audio",
-      path: audio_type
-    })
+      path: audio_type,
+      ignore_hide: ignore_hide,
+      updateHeadTag,
+      ResponseHandler
+    }).then(() => {
+      VRM.head_bob_degrees = 10;
+    });
   }
 }
 export function updateHeadTag(text) {
@@ -330,11 +385,26 @@ export async function setExpression(vrm, name, target = 1.0, duration = 400) {
   if (!vrm?.expressionManager) return;
   const steps = 30;
   const delay = duration / steps;
-  const current = vrm.expressionManager.getValue(name) ?? 0;
 
-  for (let i = 1; i <= steps; i++) {
+  if (name in CUSTOM_EXPRESSIONS) {
+    const entries = Object.entries(CUSTOM_EXPRESSIONS[name]).map(([custom_name, custom_target]) => ({
+      custom_name,
+      custom_target: custom_target * target,
+      current: vrm.expressionManager.getValue(custom_name) ?? 0,
+    }));
+
+    for (let i = 1; i <= steps; i++) {
+      for (const { custom_name, custom_target, current } of entries) {
+        vrm.expressionManager.setValue(custom_name, current + (custom_target - current) * (i / steps));
+      }
+      await sleep(delay);
+    }
+  } else {
+    const current = vrm.expressionManager.getValue(name) ?? 0;
+    for (let i = 1; i <= steps; i++) {
       vrm.expressionManager.setValue(name, current + (target - current) * (i / steps));
       await sleep(delay);
+    }
   }
 }
 async function expressionAnimate(vrm, name, value, min = 0) {
@@ -352,19 +422,20 @@ async function autoBlink(vrm) {
   // Automatically animate the VRM model's blink expression at random intervals, creating a natural blinking effect
   if (!vrm) return;
   while (true) {
-      await sleep(2500 + Math.random() * 3000);
-      if (vrm) await expressionAnimate(vrm, "blink", 1.0, blinkMinCurrent);
+    await sleep(2500 + Math.random() * 3000);
+    if (vrm && !EVENTS.ignore_blinking) await expressionAnimate(vrm, "blink", 1.0, blinkMinCurrent);
   }
 }
 export async function showExpressionForDuration(vrm, name, target, duration) {
   // Show an expression for a specified duration, then fall back to default expression
   if (!vrm?.expressionManager) return;
-
+  EVENTS.ignore_blinking = true;
   await setExpression(vrm, name, target, 200);
   await sleep(duration);
 
   await Promise.all([
       setExpression(vrm, name, 0, 400),
-      setExpression(vrm, DM.EXPRESSION.name, DM.EXPRESSION.value, 400),
+      setExpression(vrm, DM.IDLE.expression.name, DM.IDLE.expression.value, 400),
   ]);
+  EVENTS.ignore_blinking = false;
 }

@@ -50,6 +50,7 @@ export function sendPrompt(ws, model_path, expression, playing_music) {
     ws.send(JSON.stringify(data))
     console.log("User:", input.value);
     input.value = "";
+    input.blur();
 }
 
 export function inputTextPlaceholder(inputEl, placeholderText) {

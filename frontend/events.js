@@ -39,7 +39,7 @@ export function eventListeners(camera, getBodyMeshes, renderer, raycaster) {
     if (e.button !== 0) return;
     EVENTS.is_left_clicking = true;
     if (DS.touch_id) {
-      onBoneTouch_old(camera, getBodyMeshes(), renderer.domElement, raycaster, e);
+      onBoneTouch_old(camera, getBodyMeshes(), renderer.domElement, raycaster, e, EVENTS);
     }
   });
 
@@ -89,11 +89,11 @@ export function eventListeners(camera, getBodyMeshes, renderer, raycaster) {
 
   const send_prompt_btn = document.getElementById("send_prompt");
   const prompt_input = document.getElementById("user_prompt");
-  if (send_prompt_btn) send_prompt_btn.addEventListener("click", () => sendPrompt(ws, VRM.vrm_path, `{"${DM.EXPRESSION.name}": ${DM.EXPRESSION.value}}`, VRM.playing_music));
+  if (send_prompt_btn) send_prompt_btn.addEventListener("click", () => sendPrompt(ws, VRM.vrm_path, `{"${DM.IDLE.expression.name}": ${DM.IDLE.expression.value}}`, VRM.playing_music));
   if (prompt_input) prompt_input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      sendPrompt(ws, VRM.vrm_path, `{"${DM.EXPRESSION.name}": ${DM.EXPRESSION.value}}`, VRM.playing_music);
+      sendPrompt(ws, VRM.vrm_path, `{"${DM.IDLE.expression.name}": ${DM.IDLE.expression.value}}`, VRM.playing_music);
     }
   });
   const music_btn = document.getElementById("music");

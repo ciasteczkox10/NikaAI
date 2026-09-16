@@ -128,38 +128,39 @@ function addBlocker(vrm, humanoidName, radius, offset, mat, colliders) {
 
 let reactionGeneration = 0;
 let reaction_message, reaction_message_last;
-async function reactToTouch() {
-    if (!VRM.vrm?.expressionManager) return;
-    const generation = ++reactionGeneration;
-    const messages = Object.entries(REACTION_MESSAGES);
+async function reactToTouch(events) {
+  if (events.ignore_touch) return;
+  if (!VRM.vrm?.expressionManager) return;
+  const generation = ++reactionGeneration;
+  const messages = Object.entries(REACTION_MESSAGES);
 
-    do {
-        const [key, value] =
-            messages[Math.floor(Math.random() * messages.length)];
+  do {
+      const [key, value] =
+          messages[Math.floor(Math.random() * messages.length)];
 
-        reaction_message = { key, value };
-    } while (reaction_message.key === reaction_message_last);
+      reaction_message = { key, value };
+  } while (reaction_message.key === reaction_message_last);
 
-    reaction_message_last = reaction_message.key;
+  reaction_message_last = reaction_message.key;
 
-    showHeadTag(
-        reaction_message.key,
-        reaction_message.value
-    );
+  showHeadTag(
+      reaction_message.key,
+      reaction_message.value
+  );
 
-    await setExpression(VRM.vrm, "angry", 0.5, 250);
+  await setExpression(VRM.vrm, "angry", 0.5, 250);
 
-    if (generation !== reactionGeneration) return;
-    await sleep(1500);
-    if (generation !== reactionGeneration) return;
-    await setExpression(VRM.vrm, "angry", 0.0, 250);
-    if (generation !== reactionGeneration) return;
-    await setExpression(
-      VRM.vrm,
-      DM.EXPRESSION.name,
-      DM.EXPRESSION.value,
-      250
-    );
+  if (generation !== reactionGeneration) return;
+  await sleep(1500);
+  if (generation !== reactionGeneration) return;
+  await setExpression(VRM.vrm, "angry", 0.0, 250);
+  if (generation !== reactionGeneration) return;
+  await setExpression(
+    VRM.vrm,
+    DM.IDLE.expression.name,
+    DM.IDLE.expression.value,
+    250
+  );
 }
 
 /*
@@ -169,7 +170,7 @@ That's what keeps this fast; a torso/face click hits its blocker sphere
 first (closest along the ray) and is ignored, with no lag, instead of
 falling through to whatever hair capsule sits behind it.
 */
-export function onBoneTouch_old(camera, colliders, domElement, raycaster, event) {
+export function onBoneTouch_old(camera, colliders, domElement, raycaster, event, events) {
   const rect = domElement.getBoundingClientRect();
   const x = event.touches ? event.touches[0].clientX : event.clientX;
   const y = event.touches ? event.touches[0].clientY : event.clientY;
@@ -187,6 +188,6 @@ export function onBoneTouch_old(camera, colliders, domElement, raycaster, event)
   const bone = nearest.object.userData.bone;
   if (HAIR_TOUCH_BONES.includes(bone.name)) {
     console.log('Touched hair bone:', bone.name);
-    reactToTouch();
+    reactToTouch(events);
   }
 }

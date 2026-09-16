@@ -3,6 +3,7 @@
 *.old
 backend/context.json
 frontend/*.wav
+output.wav
 node_modules/
 __pycache__/
 AGENTS.md

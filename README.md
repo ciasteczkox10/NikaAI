@@ -36,14 +36,27 @@ NikaAI/
 │   ├── ai.py            # LLM client (OpenAI-compatible)
 │   ├── tts.py           # Text-to-speech (pocket_tts_timestamped), in-process
 │   ├── stt.py           # Speech-to-text (faster-whisper), in-process
-│   ├── music.py         # Music detection
+│   ├── music.py         # Music detection (cross-platform: winsdk/dbus/MediaRemote)
 │   ├── context.py       # Session memory (max 50 messages)
-│   └── context.json     # persisted session memory
+│   ├── context.json     # persisted session memory
+│   └── voices/voice.safetensors   # TTS voice
+├── config/
+│   ├── config.py        # env vars, VRM/VRMA auto-discovery, SYSTEM_PROMPT
+│   ├── config.js        # JS-side config loader
+│   └── config.json      # user-editable defaults (model, idle/greeting/thinking, settings, expressions)
 ├── assets/
 │   ├── models/<name>/model.vrm   # VRM avatars, auto-detected
 │   ├── vrma/            # animations
 │   └── sounds/          # pre-generated touch-reaction audio
-├── frontend/            # Three.js + @pixiv/three-vrm
+├── frontend/
+│   ├── main.js          # WS client, scene setup, animation loop
+│   ├── vrm.js           # VRM loading, expressions, animations, look-at, head bobbing
+│   ├── audio.js         # TTS/effect playback, lip sync
+│   ├── bone_touch.js    # hair/face touch detection (colliders)
+│   ├── events.js        # mouse/keyboard/UI event listeners
+│   ├── stt.js           # mic recording
+│   ├── utils.js         # model buttons, prompt sending
+│   └── index.html
 ├── run.bat / run.sh
 └── .env
 ```
@@ -51,6 +64,16 @@ NikaAI/
 **Flow:** frontend records mic audio → binary bytes sent over the WebSocket (`:8766`) → transcribed in-process by `faster-whisper` → text returned to the input bar → user sends text over the WebSocket → backend queries the LLM → LLM returns `{"response": [["word", {expression, animation, model}], ...]}` JSON → backend TTS-synthesizes the reply and broadcasts the response with per-word timestamps → frontend plays audio + drives lip sync/animation → response text shown in the cloud.
 
 **Communication:** a single WebSocket at `:8766` carries JSON text messages, binary audio (STT), and prefixed strings. There is no `cmd:arg` protocol and no Flask server. TTS and STT run inside the backend process (the FastAPI STT app in `stt.py` is only used if you run that file directly; the main flow imports `transcribe` in-process).
+
+## Configuration
+
+`config/config.json` holds user-editable defaults so you don't have to touch code:
+- `model` — default model name, idle/greeting/thinking animation, text, expression, and `ignored_animations` (animations hidden from the AI's allowed list, e.g. `idle`/`thinking`)
+- `settings` — toggles for music bobbing, touch reactions, mouse tracking
+- `base` — asset folder paths (vrm/vrma/sounds)
+- `custom_expressions` — named blends of base expression weights (e.g. `annoyed`)
+
+`config/config.py` handles env vars, VRM/VRMA auto-discovery, and `SYSTEM_PROMPT`.
 
 ## Requirements
 

@@ -25,6 +25,7 @@ import {
   updateHeadBobbing, // update head bobbing animation based on if music is playing or not
   updateHeadTag, // update message in the head tag
   showHeadTag, // show a message in the head tag
+  setExpression, // set a specific expression on the model
   showExpressionForDuration // animate an expression to a target value over a specified duration
 } from "./vrm.js";
 import {
@@ -55,7 +56,6 @@ export function loadModel(model_path) {
     onModelLoaded(vrm);
     if (VRM.vrm) VRM.vrm.scene.visible = true;
     if (last_message) updateHeadTag(last_message);
-    else updateHeadTag(DM.GREETING.text);
     document.getElementById('loading_spinner').classList.remove('show');
   });
 }
@@ -90,7 +90,7 @@ export function ResponseHandler(data) {
   console.log(responses)
   const stt_transcription = responses.stt_transcription ?? ""
   const llm_response = responses.response ?? ""
-  const expression = responses.expression ?? {}
+  const expression = responses.expression ?? null
   const animation = responses.animation ?? ""
   const model = responses.model ?? ""
   const audio = responses.audio ?? {}
@@ -192,8 +192,10 @@ function init() {
   }
   if (ws_con) connectWS();
 
+  let used_expression;
   window.addEventListener("thinking_start", () => {
     EVENTS.ignore_mouse = true;
+    used_expression = true;
     let x, y;
     do {
       x = Math.floor(Math.random() * 3) - 1;
@@ -203,22 +205,32 @@ function init() {
     const targetYaw = x * updateLookAt_SETTINGS.MAX_YAW * 0.75;
     const targetPitch = y * updateLookAt_SETTINGS.MAX_PITCH * 0.75;
 
+    const expression = DM.THINKING.expression ?? null;
+    if (expression) {
+      setExpression(VRM.vrm, expression?.name, expression?.value ?? 1.0)
+      used_expression = true;
+    }
     setThinkingLook(targetYaw, targetPitch);
 
-    updateHeadTag(DM.THINKING.text);
+    //updateHeadTag(DM.THINKING.text);
+    showHeadTag(DM.THINKING.text, DM.THINKING.audio ?? null, null, true);
     playVRMA(DM.THINKING.animation, false);
   });
   window.addEventListener("thinking_end", () => {
     EVENTS.ignore_mouse = false;
+    const expression = DM.THINKING.expression ?? null;
+    if (used_expression) {
+      setExpression(VRM.vrm, expression?.name, 0);
+    }
   });
-
 }
+
+
 let fps = 60;
 function animate() {
   requestAnimationFrame(animate);
   clock.update();
   const dt = clock.getDelta();
-
   if (VRM.vrm) {
     if (VRM.vrm_loaded && VRM.vrm_pose_ready && !VRM.vrm.scene.visible) {
       // Make the VRM model visible once it is fully loaded and ready

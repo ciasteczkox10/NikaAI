@@ -12,22 +12,29 @@ export const VRM_MODELS = Object.fromEntries( // Create an object mapping VRM mo
 )
 export { VRM_METADATA };
 
+export const CUSTOM_EXPRESSIONS = config.custom_expressions // Custom expression presets from config.js: preset: { name: weight }
+  
+
 export const DEFAULT_MODEL_SETTINGS = {
   // Default settings for the VRM model.
-  MODEL: VRM_MODELS[config.model.model], // Default VRM model to load on startup.
+  MODEL: VRM_MODELS[config.model.model], // default VRM model to load on startup.
   IDLE: {
-    animation: PATH.VRMA_BASE + config.model.idle.animation, // Default idle animation for the VRM model.
+    animation: PATH.VRMA_BASE + config.model.idle.animation, // default idle animation for the VRM model.
+    text: config.model.idle.text, // default message to display when the model is idle
+    expression: config.model.idle.expression // default expression to set when the model is idle
   },
   GREETING: {
-    text: config.model.greeting.text // default message to display when the model is loaded
+    animation: PATH.VRMA_BASE + config.model.greeting.animation, // default greeting animation for the VRM model. 
+    text: config.model.greeting.text, // default message to display when the model is loaded
+    expression: config.model.greeting.expression, // default expression to set when the model is loaded
+    audio: PATH.SOUNDS_BASE + config.model.greeting.audio // default audio to play when the model is loaded
+    // TODO for audio: Find a way to bypass requirement of interaction with the page before audio can be played.
   },
   THINKING: {
     animation: PATH.VRMA_BASE + config.model.thinking.animation, // Default thinking animation for the VRM model.
-    text: config.model.thinking.text // default message to display when the model is thinking
-  },
-  EXPRESSION: {
-    name: config.model.expression.name, // default expression to set after loading a model
-    value: config.model.expression.value, // default expression value to set after loading a model
+    text: config.model.thinking.text, // default message to display when the model is thinking
+    expression: config.model.thinking.expression, // default expression to set when the model is thinking
+    audio: PATH.SOUNDS_BASE + config.model.thinking.audio // default audio to play when the model is thinking
   }
 };
 
@@ -99,109 +106,6 @@ export const REACTION_MESSAGES = {
   "Please don't touch my head!": `${PATH.SOUNDS_BASE}please_dont_touch_my_head.wav`,
   "Don't touch my head!": `${PATH.SOUNDS_BASE}dont_touch_my_head.wav`
 };
-
-export const HAIR_TOUCH_BONES =[
-  // List of bone names in the VRM model that correspond to hair sections. Used to detect when the user touches the model's hair.
-"J_Sec_Hair1_01",
-"J_Sec_Hair2_01",
-"J_Sec_Hair3_01",
-"J_Sec_Hair4_01",
-"J_Sec_Hair5_01",
-"J_Sec_Hair6_01",
-"J_Sec_Hair7_01",
-
-"J_Sec_Hair1_02",
-"J_Sec_Hair2_02",
-"J_Sec_Hair3_02",
-"J_Sec_Hair4_02",
-"J_Sec_Hair5_02",
-"J_Sec_Hair6_02",
-
-"J_Sec_Hair1_03",
-"J_Sec_Hair2_03",
-"J_Sec_Hair3_03",
-"J_Sec_Hair4_03",
-"J_Sec_Hair5_03",
-"J_Sec_Hair6_03",
-
-"J_Sec_Hair1_04",
-"J_Sec_Hair2_04",
-"J_Sec_Hair3_04",
-"J_Sec_Hair4_04",
-"J_Sec_Hair5_04",
-"J_Sec_Hair6_04",
-
-"J_Sec_Hair1_05",
-"J_Sec_Hair2_05",
-"J_Sec_Hair3_05",
-"J_Sec_Hair4_05",
-"J_Sec_Hair5_05",
-"J_Sec_Hair6_05",
-
-"J_Sec_Hair1_06",
-"J_Sec_Hair2_06",
-"J_Sec_Hair3_06",
-"J_Sec_Hair4_06",
-"J_Sec_Hair5_06",
-"J_Sec_Hair6_06",
-
-"J_Sec_Hair1_07",
-"J_Sec_Hair2_07",
-"J_Sec_Hair3_07",
-"J_Sec_Hair4_07",
-"J_Sec_Hair5_07",
-
-"J_Sec_Hair1_08",
-"J_Sec_Hair2_08",
-"J_Sec_Hair3_08",
-"J_Sec_Hair4_08",
-"J_Sec_Hair5_08",
-
-"J_Sec_Hair1_09",
-"J_Sec_Hair2_09",
-"J_Sec_Hair3_09",
-"J_Sec_Hair4_09",
-
-"J_Sec_Hair1_10",
-"J_Sec_Hair2_10",
-"J_Sec_Hair3_10",
-
-"J_Sec_Hair1_11",
-"J_Sec_Hair2_11",
-"J_Sec_Hair3_11",
-
-"J_Sec_Hair1_12",
-"J_Sec_Hair2_12",
-"J_Sec_Hair3_12",
-
-"J_Sec_Hair1_13",
-"J_Sec_Hair2_13",
-"J_Sec_Hair3_13",
-
-"J_Sec_Hair1_14",
-"J_Sec_Hair2_14",
-"J_Sec_Hair3_14",
-
-"J_Sec_Hair1_15",
-"J_Sec_Hair2_15",
-"J_Sec_Hair3_15",
-"J_Sec_Hair4_15",
-
-"J_Sec_Hair1_16",
-"J_Sec_Hair2_16",
-"J_Sec_Hair3_16",
-"J_Sec_Hair4_16",
-
-"J_Sec_Hair1_17",
-"J_Sec_Hair2_17",
-"J_Sec_Hair3_17",
-"J_Sec_Hair4_17",
-
-"J_Sec_Hair1_18",
-"J_Sec_Hair2_18",
-"J_Sec_Hair3_18",
-"J_Sec_Hair4_18"
-];
 
 export const FACE_TOUCH_BONES = [
   // List of bone names in the VRM model that correspond to the face. Used to detect when the user touches the model's face.

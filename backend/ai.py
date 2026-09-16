@@ -27,4 +27,7 @@ def chat(user_prompt: str, save: bool = False) -> str:
             save_context(messages)
             return json.loads(llm_response)
         except BadRequestError:
-            return "Bad Request Error"
+            return {"error": "Bad Request Error"}
+        except json.JSONDecodeError as e:
+            print(f"Error parsing LLM response as JSON: {e}")
+            return {"error": "Invalid JSON"}

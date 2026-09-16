@@ -2,18 +2,30 @@
     "model": {
         "model": "nika",
         "idle": {
-            "animation": "idle.vrma"
+            "animation": "idle.vrma",
+            "text": null,
+            "expression": {
+                "name": "relaxed",
+                "value": 0.3
+            }
         },
         "greeting": {
-            "text": "Hi, i'm Nika!"
+            "animation": "waving.vrma",
+            "text": "Hi, i'm Nika!",
+            "expression": {
+                "name": "happy",
+                "value": 1.0
+            },
+            "audio": null
         },
         "thinking": {
             "animation": "thinking.vrma",
-            "text": "Nika is thinking..."
-        },
-        "expression": {
-            "name": "neutral",
-            "value": 0.5
+            "text": "Nika is thinking...",
+            "expression": {
+                "name": null,
+                "value": null
+            },
+            "audio": "hey.wav"
         },
         "ignored_animations": ["idle", "thinking"]
     },
@@ -26,5 +38,12 @@
         "vrm": "./assets/models/",
         "vrma": "./assets/vrma/",
         "sounds": "./assets/sounds/"
+    },
+    "custom_expressions": {
+      "annoyed": {
+        "angry": 0.4,
+        "relaxed": 0.2,
+        "sad": 0.35
+      }
     }
-}
+  }

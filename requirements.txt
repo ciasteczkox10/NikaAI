@@ -1,7 +1,7 @@
 fastapi
 faster_whisper
 openai
-pocket_tts
+pocket_tts_timestamped
 python-dotenv
 scipy
 uvicorn

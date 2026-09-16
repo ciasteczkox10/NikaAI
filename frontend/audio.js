@@ -27,7 +27,7 @@ function pickViseme(word) {
   return VOWEL_TO_VISEME[vowels[0]] || "aa";
 }
 
-export async function playAudio({ type, path = null, timestamps = null, response = null, updateHeadTag, ResponseHandler }) {
+export async function playAudio({ type, path = null, timestamps = null, response = null, ignore_hide = false, updateHeadTag, ResponseHandler }) {
   const src = type === "tts_audio" ? `./output.wav?t=${Date.now()}`
             : type === "no_tts_audio" ? path
             : null;
@@ -53,6 +53,7 @@ export async function playAudio({ type, path = null, timestamps = null, response
 
   let syncInterval = null;
   let lastWord = null;
+  let hideTagTimeout = null;
 
   if (timestamps && response) {
     const responseWords = response.split(" ");
@@ -62,7 +63,20 @@ export async function playAudio({ type, path = null, timestamps = null, response
   }
 
   try {
+    await new Promise((resolve) => {
+      if (audio.readyState >= 1) resolve();
+      else audio.addEventListener("loadedmetadata", resolve, { once: true });
+    });
+    if (!ignore_hide) {
+      const hideDelay = audio.duration * 1.5 * 1000;
+      hideTagTimeout = setTimeout(() => updateHeadTag(null), hideDelay);
+    }
     await audio.play();
+
+    if (!ignore_hide && Number.isFinite(audio.duration) && audio.duration > 0) {
+      const hideDelay = (audio.duration + audio.duration * 0.5) * 1000;
+      hideTagTimeout = setTimeout(() => updateHeadTag(null), hideDelay);
+    }
 
     if (timestamps && timestamps.length) {
       syncInterval = setInterval(() => {
@@ -93,6 +107,7 @@ export async function playAudio({ type, path = null, timestamps = null, response
     console.log("Audio playback error:", error);
   } finally {
     if (syncInterval) clearInterval(syncInterval);
+    if (hideTagTimeout) clearTimeout(hideTagTimeout);
     if (playbackId === current_voice_playback_id) {
       current_voice_audio = null;
       playing_voice_effect = false;

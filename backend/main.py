@@ -93,7 +93,7 @@ async def handler_ws(ws):
         async for msg in ws:
             if isinstance(msg, bytes):
                 result = transcribe(msg)
-                await broadcast(f"stt_result:{result['text']}")
+                await broadcast(json.dumps({"stt_result": result['text']}))
                 continue
             try:
                 data = json.loads(msg)
@@ -128,7 +128,7 @@ async def main():
 if __name__ == "__main__":
     print("TTS Enabled" if use_tts else "TTS Disabled")
     print("STT Enabled" if use_stt else "STT Disabled")
-    #print(SYSTEM_PROMPT)
+    print(SYSTEM_PROMPT)
     print(f"Startup time: {time.perf_counter() - START:.2f}s")
     try:
         asyncio.run(main())
