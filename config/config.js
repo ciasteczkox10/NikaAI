@@ -27,14 +27,14 @@ export const DEFAULT_MODEL_SETTINGS = {
     animation: PATH.VRMA_BASE + config.model.greeting.animation, // default greeting animation for the VRM model. 
     text: config.model.greeting.text, // default message to display when the model is loaded
     expression: config.model.greeting.expression, // default expression to set when the model is loaded
-    audio: PATH.SOUNDS_BASE + config.model.greeting.audio // default audio to play when the model is loaded
+    audio: config.model.greeting.audio ? PATH.SOUNDS_BASE + config.model.greeting.audio : null, // default audio to play when the model is loaded
     // TODO for audio: Find a way to bypass requirement of interaction with the page before audio can be played.
   },
   THINKING: {
     animation: PATH.VRMA_BASE + config.model.thinking.animation, // Default thinking animation for the VRM model.
     text: config.model.thinking.text, // default message to display when the model is thinking
     expression: config.model.thinking.expression, // default expression to set when the model is thinking
-    audio: PATH.SOUNDS_BASE + config.model.thinking.audio // default audio to play when the model is thinking
+    audio: config.model.thinking.audio ? PATH.SOUNDS_BASE + config.model.thinking.audio : null // default audio to play when the model is thinking
   }
 };
 

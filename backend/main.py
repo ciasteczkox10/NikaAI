@@ -45,8 +45,7 @@ async def process_input(data):
     word_actions = response.get("response", [])
     clean_text = " ".join(word for word, action in word_actions)
 
-    if use_tts:
-        timestamps = generate_tts(clean_text)
+    timestamps = generate_tts(clean_text) if use_tts else []
 
     audio_type = "tts_audio" if use_tts else "no_tts_audio"
     response["audio"] = {
@@ -100,7 +99,7 @@ async def handler_ws(ws):
             except json.JSONDecodeError:
                 print("Error parsing JSON:")
                 await broadcast(json.dumps({"error": "Invalid JSON"}))
-            
+                continue
 
             class_data = AI_Inputs()
             await process_input(class_data(data))

@@ -199,6 +199,7 @@ export function updateCameraFollow(dt) {
 }
 let _thinkingYaw = 0;
 let _thinkingPitch = 0;
+
 export function setThinkingLook(yaw, pitch) {
   _thinkingYaw = yaw;
   _thinkingPitch = pitch;

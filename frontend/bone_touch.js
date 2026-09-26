@@ -128,9 +128,12 @@ function addBlocker(vrm, humanoidName, radius, offset, mat, colliders) {
 
 let reactionGeneration = 0;
 let reaction_message, reaction_message_last;
+let playing_reaction = false;
 async function reactToTouch(events) {
   if (events.ignore_touch) return;
   if (!VRM.vrm?.expressionManager) return;
+  if (playing_reaction) return
+  playing_reaction = true;
   const generation = ++reactionGeneration;
   const messages = Object.entries(REACTION_MESSAGES);
 
@@ -161,14 +164,16 @@ async function reactToTouch(events) {
     DM.IDLE.expression.value,
     250
   );
+  playing_reaction = false;
 }
 
 /*
 Only ever raycasts the lightweight primitive colliders array (hair
-capsules + head/chest/hips blockers) — never real skinned mesh geometry.
-That's what keeps this fast; a torso/face click hits its blocker sphere
-first (closest along the ray) and is ignored, with no lag, instead of
-falling through to whatever hair capsule sits behind it.
+capsules + face capsules + head/chest/hips blockers) — never real skinned
+mesh geometry. That's what keeps this fast; a click near the head/torso
+that isn't on a hair or face bone hits a blocker sphere first (closest
+along the ray) and is ignored, with no lag, instead of falling through to
+whatever hair capsule sits behind it.
 */
 export function onBoneTouch_old(camera, colliders, domElement, raycaster, event, events) {
   const rect = domElement.getBoundingClientRect();
@@ -186,8 +191,8 @@ export function onBoneTouch_old(camera, colliders, domElement, raycaster, event,
   if (nearest.object.userData.isBlocker) return; // torso/head absorbed the click
 
   const bone = nearest.object.userData.bone;
-  if (HAIR_TOUCH_BONES.includes(bone.name)) {
-    console.log('Touched hair bone:', bone.name);
+  if (HAIR_TOUCH_BONES.includes(bone.name) || FACE_TOUCH_BONES.includes(bone.name)) {
+    console.log('Touched bone:', bone.name);
     reactToTouch(events);
   }
 }

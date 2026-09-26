@@ -67,10 +67,6 @@ export async function playAudio({ type, path = null, timestamps = null, response
       if (audio.readyState >= 1) resolve();
       else audio.addEventListener("loadedmetadata", resolve, { once: true });
     });
-    if (!ignore_hide) {
-      const hideDelay = audio.duration * 1.5 * 1000;
-      hideTagTimeout = setTimeout(() => updateHeadTag(null), hideDelay);
-    }
     await audio.play();
 
     if (!ignore_hide && Number.isFinite(audio.duration) && audio.duration > 0) {
