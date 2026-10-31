@@ -153,4 +153,10 @@ python -m backend.main --no-stt   # Disable speech-to-text
 
 ## License
 
-MIT — do whatever you want with it.
+- **Source code:** MIT License.
+- **Nika VRM model and related assets:** All rights reserved.
+
+See [MODEL_LICENSE.md](MODEL_LICENSE.md).
+
+The MIT License does not grant permission to redistribute,
+modify for redistribution, or commercially use the Nika model.
